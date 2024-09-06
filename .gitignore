@@ -1,0 +1,13 @@
+﻿Library
+obj
+Temp
+SerializedBuildInfo
+.vs
+Logs
+AssetBundles
+AssetBundles
+Assets/游戏内.png
+/apk/
+*.csproj
+*.sln
+.idea
