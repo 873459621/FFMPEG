@@ -645,6 +645,20 @@ public class FFMPEGUtil : MonoBehaviour
     {
         ClearMp4s();
         
+        var txt = Resources.Load<TextAsset>("total").text;
+        txt = txt.Replace("\r", "");
+        var ss = txt.Split("\n");
+
+        foreach (var s in ss)
+        {
+            if (!string.IsNullOrEmpty(s))
+            {
+                var mp4 = MP4.ParseTableStr(s);
+                AddMp4(mp4);
+            }
+        }
+        return;
+        
         var reader = File.OpenText("Assets/Resources/total.txt");
 
         while (!reader.EndOfStream)
