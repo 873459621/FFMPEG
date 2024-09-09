@@ -65,6 +65,8 @@ public class MP4
     public string Name;
     public string Pre;
     public string Sub;
+    public string Path;
+    public string RealName;
 
     public bool IsMatch = false;
     
@@ -72,30 +74,85 @@ public class MP4
     {
     }
     
-    public MP4(string str)
+    public MP4(string str, string path = null)
     {
-        var regex = new Regex("[a-zA-Z0-9]+-[0-9]+");
-        var match = regex.Match(str);
+        Path = path;
 
-        if (match.Success)
+        if (!string.IsNullOrEmpty(path))
         {
-            Name = match.Value.ToLower();
-            var ss = Name.Split('-');
-            Pre = ss[0];
-            Sub = ss[1];
-            IsMatch = true;
+            int index = path.LastIndexOf('\\');
+            RealName = path.Substring(index + 1, path.Length - index - 1);
         }
-        else
+
+        List<Regex> list = new List<Regex>()
+        {
+            new Regex("[a-zA-Z0-9]{2,}-[0-9]{2,}"),
+            new Regex("[a-zA-Z0-9]{2,}_[0-9]{2,}"),
+            new Regex("[a-zA-Z0-9]{2,} [0-9]{2,}"),
+            new Regex("[0-9]{6,}"),
+            new Regex("[a-zA-Z]{2,}[0-9]{2,}"),
+        };
+
+        List<char> sps = new List<char>()
+        {
+            '-',
+            '_',
+            ' ',
+        };
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            var match = list[i].Match(str);
+        
+            if (match.Success)
+            {
+                if (i < sps.Count)
+                {
+                    Name = match.Value.ToLower();
+                    var ss = Name.Split(sps[i]);
+                    Pre = ss[0];
+                    Sub = ss[1];
+
+                    if (int.TryParse(Pre, out i))
+                    {
+                        Name = Pre;
+                        Sub = Pre;
+                    }
+                }
+                else
+                {
+                    if (i == list.Count - 1)
+                    {
+                        var reg1 = new Regex("[a-zA-Z]{2,}");
+                        var reg2 = new Regex("[0-9]{2,}");
+                        Name = match.Value.ToLower();
+                        Pre = reg1.Match(Name).Value;
+                        Sub = reg2.Match(Name).Value;
+                    }
+                    else
+                    {
+                        Name = match.Value;
+                        Pre = Name;
+                        Sub = Name;
+                    }
+                }
+                IsMatch = true;
+                break;
+            }
+        }
+
+        if (!IsMatch)
         {
             Name = str;
             Pre = "";
             Sub = "";
+            Debug.LogError(Name);
         }
     }
     
     public string ToTableStr()
     {
-        return $"{Name}{SP}{Pre}{SP}{Sub}";
+        return $"{Name}{SP}{Pre}{SP}{Sub}{SP}{Path}";
     }
 
     public static MP4 ParseTableStr(string str)
@@ -106,10 +163,27 @@ public class MP4
             Name = ss[0],
             Pre = ss[1],
             Sub = ss[2],
+            Path = ss[3],
         };
-        mp4.IsMatch = string.IsNullOrEmpty(mp4.Pre);
+        mp4.IsMatch = !string.IsNullOrEmpty(mp4.Pre);
+        
+        if (!string.IsNullOrEmpty(mp4.Path))
+        {
+            int index = mp4.Path.LastIndexOf('\\');
+            mp4.RealName = mp4.Path.Substring(index + 1, mp4.Path.Length - index - 1);
+        }
+        
         return mp4;
     }
+}
+
+public enum TestType
+{
+    Pass,
+    NotMatch,
+    SameName,
+    SamePre,
+    SameSub,
 }
 
 public class FFMPEGUtil : MonoBehaviour
@@ -251,6 +325,8 @@ public class FFMPEGUtil : MonoBehaviour
             TryAddVideo(info);
         }
 
+        reader.Close();
+        reader.Dispose();
         UpdateUI();
         Debug.LogError($"加载成功：{path}");
     }
@@ -465,7 +541,6 @@ public class FFMPEGUtil : MonoBehaviour
             }
         }
         
-        sw.WriteLine("pause");
         sw.Close();
         sw.Dispose();
         Debug.LogError("sh生成成功");
@@ -521,5 +596,337 @@ public class FFMPEGUtil : MonoBehaviour
         sw.Close();
         sw.Dispose();
         Debug.LogError("sh生成成功");
+    }
+
+    public List<MP4> Mp4s = new List<MP4>();
+    public Dictionary<string, List<MP4>> Total = new Dictionary<string, List<MP4>>();
+    public Dictionary<string, List<MP4>> Pre = new Dictionary<string, List<MP4>>();
+    public Dictionary<string, List<MP4>> Sub = new Dictionary<string, List<MP4>>();
+    public Dictionary<string, List<MP4>> Non = new Dictionary<string, List<MP4>>();
+
+    public void ClearMp4s()
+    {
+        Mp4s.Clear();
+        Total.Clear();
+        Pre.Clear();
+        Sub.Clear();
+        Non.Clear();
+    }
+
+    private void AddMp4ToDict(MP4 mp4, string key, Dictionary<string, List<MP4>> dict)
+    {
+        if (dict.TryGetValue(key, out var list))
+        {
+            list.Add(mp4);
+        }
+        else
+        {
+            dict.Add(key, new List<MP4>{ mp4 });
+        }
+    }
+    
+    public void AddMp4(MP4 mp4)
+    {
+        Mp4s.Add(mp4);
+        AddMp4ToDict(mp4, mp4.Name, Total);
+
+        if (mp4.IsMatch)
+        {
+            AddMp4ToDict(mp4, mp4.Pre, Pre);
+            AddMp4ToDict(mp4, mp4.Sub, Sub);
+        }
+        else
+        {
+            AddMp4ToDict(mp4, mp4.Name, Non);
+        }
+    }
+    
+    public void ReadTotal()
+    {
+        ClearMp4s();
+        
+        var reader = File.OpenText("Assets/Resources/total.txt");
+
+        while (!reader.EndOfStream)
+        {
+            var mp4 = MP4.ParseTableStr(reader.ReadLine());
+            AddMp4(mp4);
+        }
+
+        reader.Close();
+        reader.Dispose();
+    }
+
+    public void GenTotal()
+    {
+        ClearMp4s();
+
+        for (int i = 0; i < 26; i++)
+        {
+            char a = (char)('A' + i);
+            AddToTotal(a.ToString());
+        }
+
+        ExportTotal();
+    }
+
+    public void AddToTotal(string tb)
+    {
+        var path = $"Assets/Resources/{tb}.txt";
+        
+        if (!File.Exists(path))
+        {
+            return;
+        }
+        
+        var reader = File.OpenText(path);
+
+        while (!reader.EndOfStream)
+        {
+            var video = VideoInfo.ParseTableStr(reader.ReadLine());
+            var mp4 = new MP4(video.Name, $"{video.Path}\\{video.Name}");
+            AddMp4(mp4);
+        }
+
+        reader.Close();
+        reader.Dispose();
+    }
+
+    public void ExportTotal()
+    {
+        StreamWriter sw;
+        FileInfo fi = new FileInfo("Assets/Resources/total.txt");
+        sw = fi.CreateText();
+        
+        foreach (var mp4 in Mp4s)
+        {
+            sw.WriteLine(mp4.ToTableStr());
+        }
+        
+        sw.Close();
+        sw.Dispose();
+        Debug.LogError("导出成功！");
+    }
+
+    public TestType TestLink(string link, out MP4 mp4)
+    {
+        mp4 = new MP4(link);
+
+        if (mp4.IsMatch)
+        {
+            if (Total.ContainsKey(mp4.Name))
+            {
+                return TestType.SameName;
+            }
+            else if (Sub.ContainsKey(mp4.Sub))
+            {
+                return TestType.SameSub;
+            }
+            else if (Pre.ContainsKey(mp4.Pre))
+            {
+                return TestType.SamePre;
+            }
+            
+            return TestType.Pass;
+        }
+
+        return TestType.NotMatch;
+    }
+    
+    public void TestFile(string tb)
+    {
+        var reader = File.OpenText($"Assets/Resources/{tb}.txt");
+        
+        var sw = new FileInfo($"Assets/Resources/{tb}_p.txt").CreateText();
+        var sw_n = new FileInfo($"Assets/Resources/{tb}_n.txt").CreateText();
+        var sw_w = new FileInfo($"Assets/Resources/{tb}_w.txt").CreateText();
+
+        while (!reader.EndOfStream)
+        {
+            var link = reader.ReadLine();
+            var type = TestLink(link, out MP4 mp4);
+
+            switch (type)
+            {
+                case TestType.Pass:
+                    sw.WriteLine(link);
+                    break;
+                case TestType.NotMatch:
+                    sw_n.WriteLine(link);
+                    break;
+                case TestType.SameName:
+                    sw_w.WriteLine(link);
+                    break;
+                case TestType.SamePre:
+                    sw.WriteLine(link);
+                    break;
+                case TestType.SameSub:
+                    if (mp4.Pre.Contains("fc2"))
+                    {
+                        sw_w.WriteLine(link);
+                    }
+                    else
+                    {
+                        sw.WriteLine(link);
+                    }
+                    break;
+            }
+        }
+
+        reader.Close();
+        reader.Dispose();
+        sw.Close();
+        sw.Dispose();
+        sw_n.Close();
+        sw_n.Dispose();
+        sw_w.Close();
+        sw_w.Dispose();
+        Debug.LogError("校验成功！");
+    }
+
+    public List<List<MP4>> GetTotalList()
+    {
+        List<List<MP4>> list = new List<List<MP4>>();
+
+        foreach (var l in Total.Values)
+        {
+            list.Add(l);
+        }
+
+        list.Sort((a, b) => b.Count.CompareTo(a.Count));
+        return list;
+    }
+    
+    public List<List<MP4>> GetSameNameList()
+    {
+        List<List<MP4>> list = new List<List<MP4>>();
+
+        foreach (var l in Total.Values)
+        {
+            if (l.Count > 1)
+            {
+                list.Add(l);
+            }
+        }
+
+        list.Sort((a, b) => b.Count.CompareTo(a.Count));
+        return list;
+    }
+    
+    public List<List<MP4>> GetPreList()
+    {
+        List<List<MP4>> list = new List<List<MP4>>();
+
+        foreach (var l in Pre.Values)
+        {
+            if (l.Count > 1)
+            {
+                list.Add(l);
+            }
+        }
+
+        list.Sort((a, b) => b.Count.CompareTo(a.Count));
+        return list;
+    }
+    
+    public List<List<MP4>> GetSubList()
+    {
+        List<List<MP4>> list = new List<List<MP4>>();
+
+        foreach (var l in Sub.Values)
+        {
+            if (l.Count > 1)
+            {
+                list.Add(l);
+            }
+        }
+
+        list.Sort((a, b) =>
+        {
+            int x = b[0].Sub.Length.CompareTo(a[0].Sub.Length);
+            
+            if (a[0].Sub.Length > 7 || b[0].Sub.Length > 7)
+            {
+                return -x;
+            }
+
+            if (x == 0)
+            {
+                return b.Count.CompareTo(a.Count);
+            }
+            
+            return x;
+        });
+        return list;
+    }
+    
+    public List<List<MP4>> GetNonList()
+    {
+        List<List<MP4>> list = new List<List<MP4>>();
+
+        foreach (var l in Non.Values)
+        {
+            list.Add(l);
+        }
+
+        list.Sort((a, b) => b.Count.CompareTo(a.Count));
+        return list;
+    }
+
+    public List<MP4> FindMp4(string pre, string sub)
+    {
+        var a = !string.IsNullOrEmpty(pre);
+        var b = !string.IsNullOrEmpty(sub);
+
+        if (a && b)
+        {
+            if (Pre.TryGetValue(pre, out var list))
+            {
+                List<MP4> res = new List<MP4>();
+
+                foreach (var mp4 in list)
+                {
+                    if (mp4.Sub.Equals(sub))
+                    {
+                        res.Add(mp4);
+                    }
+                }
+
+                return res;
+            }
+        }
+        else if (a)
+        {
+            if (Pre.TryGetValue(pre, out var list))
+            {
+                return list;
+            }
+        }
+        else if (b)
+        {
+            if (Sub.TryGetValue(sub, out var list))
+            {
+                return list;
+            }
+        }
+
+        return null;
+    }
+
+    public List<List<MP4>> FindAllMp4(string str)
+    {
+        List<List<MP4>> list = new List<List<MP4>>();
+        str = str.ToLower();
+
+        foreach (var kvp in Total)
+        {
+            if (kvp.Key.Contains(str))
+            {
+                list.Add(kvp.Value);
+            }
+        }
+
+        list.Sort((a, b) => b.Count.CompareTo(a.Count));
+        return list;
     }
 }

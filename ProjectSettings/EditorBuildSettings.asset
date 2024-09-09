@@ -6,9 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/mp4.unity
-    guid: b399cd5d9a80dee4cba10216a7e175ec
+    path: Assets/Scenes/Find.unity
+    guid: 851eedd014c04dc41b2c27ad6ec4a86b
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
+    path: Assets/Scenes/Encode.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   m_configObjects: {}
