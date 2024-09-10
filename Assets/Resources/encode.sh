@@ -1,6 +1,3 @@
-ffmpeg -i "D:/p3/hhd800.com@MISM-231.mp4" -vf fps=30 -c:v libx265 -preset medium -c:a aac "D:/2/hhd800.com@MISM-231.mp4"
-ffmpeg -i "D:/p3/fsdss-396.mp4" -vf fps=30 -c:v libx265 -preset medium -c:a aac "D:/2/fsdss-396.mp4"
-ffmpeg -i "D:/p3/hmgl-188.mp4" -vf fps=30 -c:v libx265 -preset medium -c:a aac "D:/2/hmgl-188.mp4"
 ffmpeg -i "D:/p3/fsdss-640.mp4" -vf fps=30 -c:v libx265 -preset medium -c:a aac "D:/2/fsdss-640.mp4"
 ffmpeg -i "D:/p3/hhd800.com@EBOD-876.mp4" -vf fps=30 -c:v libx265 -preset medium -c:a aac "D:/2/hhd800.com@EBOD-876.mp4"
 ffmpeg -i "D:/p3/hhd800.com@AKDL-099.mp4" -vf fps=30 -c:v libx265 -preset medium -c:a aac "D:/2/hhd800.com@AKDL-099.mp4"

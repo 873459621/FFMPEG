@@ -29,7 +29,9 @@ public class UI2 : MonoBehaviour
     private List<Item2> items = new List<Item2>();
 
     private List<List<MP4>> cache_list;
+    private List<MP4> cache_mp4;
     private ShowType cache_type;
+    private bool isMp4 = false;
 
     private void Start()
     {
@@ -81,7 +83,19 @@ public class UI2 : MonoBehaviour
         {
             FFMPEGUtil.Instance.TestFile(Input1.text);
         });
-}
+        
+        AddListener("btn_move", () =>
+        {
+            if (isMp4 && cache_mp4 != null)
+            {
+                FFMPEGUtil.Instance.GenMoveMp4SH(cache_mp4);
+            }
+            else if (!isMp4 && cache_list != null)
+            {
+                FFMPEGUtil.Instance.GenMoveMp4SH(cache_list);
+            }
+        });
+    }
 
     private void AddListener(string name, Action a)
     {
@@ -93,6 +107,7 @@ public class UI2 : MonoBehaviour
 
     public void ShowList(List<List<MP4>> list, ShowType type = ShowType.Name)
     {
+        isMp4 = false;
         cache_list = list;
         cache_type = type;
         
@@ -123,6 +138,9 @@ public class UI2 : MonoBehaviour
     
     public void ShowList(List<MP4> list)
     {
+        isMp4 = true;
+        cache_mp4 = list;
+        
         int max = Mathf.Min(400, list.Count);
         Content.sizeDelta = new Vector2(Content.sizeDelta.x, (max + 1) * 64);
         

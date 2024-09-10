@@ -943,4 +943,58 @@ public class FFMPEGUtil : MonoBehaviour
         list.Sort((a, b) => b.Count.CompareTo(a.Count));
         return list;
     }
+    
+    public string GenFolder(string folder)
+    {
+        string order = $"mkdir \"{MovePath}\\{folder}\"";
+        order = order.Replace("\\", "/");
+        return order;
+    }
+    
+    public string MoveMp4(MP4 mp4, string folder)
+    {
+        string order = $"mv \"{mp4.Path}\" \"{MovePath}\\{folder}\"";
+        order = order.Replace("\\", "/");
+        return order;
+    }
+    
+    public void GenMoveMp4SH(List<MP4> list)
+    {
+        StreamWriter sw;
+        FileInfo fi = new FileInfo($"Assets/Resources/move_mp4.sh");
+        sw = fi.CreateText();
+        var folder = list[0].Pre;
+        sw.WriteLine(GenFolder(folder));
+
+        foreach (var mp4 in list)
+        {
+            sw.WriteLine(MoveMp4(mp4, folder));
+        }
+        
+        sw.Close();
+        sw.Dispose();
+        Debug.LogError("sh生成成功");
+    }
+
+    public void GenMoveMp4SH(List<List<MP4>> list)
+    {
+        StreamWriter sw;
+        FileInfo fi = new FileInfo($"Assets/Resources/move_mp4.sh");
+        sw = fi.CreateText();
+
+        foreach (var mp4s in list)
+        {
+            var folder = mp4s[0].Pre;
+            sw.WriteLine(GenFolder(folder));
+
+            foreach (var mp4 in mp4s)
+            {
+                sw.WriteLine(MoveMp4(mp4, folder));
+            }
+        }
+        
+        sw.Close();
+        sw.Dispose();
+        Debug.LogError("sh生成成功");
+    }
 }
