@@ -763,11 +763,27 @@ public class FFMPEGUtil : MonoBehaviour
             {
                 return TestType.SameName;
             }
-            else if (Sub.ContainsKey(mp4.Sub))
+            
+            if (Sub.ContainsKey(mp4.Sub))
             {
-                return TestType.SameSub;
+                foreach (var t in Sub[mp4.Sub])
+                {
+                    if (t.Pre.Equals(mp4.Pre))
+                    {
+                        return TestType.SameName;
+                    }
+                }
+                
+                if (int.TryParse(mp4.Sub, out int i))
+                {
+                    if (mp4.Sub.Length >= 5)
+                    {
+                        return TestType.SameSub;
+                    }
+                }
             }
-            else if (Pre.ContainsKey(mp4.Pre))
+            
+            if (Pre.ContainsKey(mp4.Pre))
             {
                 return TestType.SamePre;
             }
