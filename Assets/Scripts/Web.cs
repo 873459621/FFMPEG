@@ -68,6 +68,11 @@ public class Web : MonoBehaviour
         {
             SceneManager.LoadScene(1);
         });
+        
+        AddListener("btn_clip", () =>
+        {
+            SendClipboard();
+        });
     }
 
     private void ShowHint(string hint)
@@ -122,5 +127,16 @@ public class Web : MonoBehaviour
                 Debug.LogError("Error: " + request.error);
             }
         };
+    }
+
+    private void SendClipboard()
+    {
+        using (var unityClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+        using (var currentActivity = unityClass.GetStatic<AndroidJavaObject>("currentActivity"))
+        {
+            string clipboardText = currentActivity.CallStatic<string>("getClipboardText", currentActivity);
+            
+            SaveMsg(clipboardText);
+        }
     }
 }
