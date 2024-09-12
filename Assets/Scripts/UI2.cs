@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class UI2 : MonoBehaviour
@@ -94,6 +95,11 @@ public class UI2 : MonoBehaviour
             {
                 FFMPEGUtil.Instance.GenMoveMp4SH(cache_list);
             }
+        });
+        
+        AddListener("btn_web", () =>
+        {
+            SceneManager.LoadScene(0);
         });
     }
 
