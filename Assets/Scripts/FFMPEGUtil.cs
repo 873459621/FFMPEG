@@ -191,8 +191,8 @@ public class FFMPEGUtil : MonoBehaviour
     public static FFMPEGUtil Instance;
     
     private const long MIN_LEN = 50L * 1024L * 1024L;
-    private const long MAX_BIT = 5000000;
-    private const long MAX_BIT_L = 2500000;
+    private const long MAX_BIT = 2500000;
+    private const long MAX_BIT_L = 1150000;
 
     public Dictionary<string, VideoInfo> VideoInfos = new Dictionary<string, VideoInfo>();
     public Dictionary<string, Dictionary<string, VideoInfo>> SameNameVideoInfos = new Dictionary<string, Dictionary<string, VideoInfo>>();
@@ -478,7 +478,7 @@ public class FFMPEGUtil : MonoBehaviour
         }
         
         string scale = info.Width > 1920 ? ",scale=1920:1080" : "";
-        string order = $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx264 -preset medium -c:a aac \"{OutPutPath}\\{name}.mp4\"";
+        string order = $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx264 -preset medium -c:a aac -q:a 4 \"{OutPutPath}\\{name}.mp4\"";
         order = order.Replace("\\", "/");
         return order;
     }
@@ -496,7 +496,7 @@ public class FFMPEGUtil : MonoBehaviour
         }
         
         string scale = info.Width > 1920 ? ",scale=1920:1080" : "";
-        string order = $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx265 -preset medium -c:a aac \"{OutPutPath}\\{name}.mp4\"";
+        string order = $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx265 -preset medium -c:a aac -q:a 4 \"{OutPutPath}\\{name}.mp4\"";
         order = order.Replace("\\", "/");
         return order;
     }
