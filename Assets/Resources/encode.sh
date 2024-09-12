@@ -1,4 +1,4 @@
-ffmpeg -i "D:/2/hhd800.com@JUL-788.mp4" -vf fps=30 -c:v libx265 -preset medium -c:a aac -q:a 4 "D:/3/hhd800.com@JUL-788.mp4"
+ffmpeg -i "D:/2/ure-066-C.mp4" -vf fps=30 -c:v libx265 -preset medium -c:a aac -q:a 4 "D:/3/ure-066-C.mp4"
 ffmpeg -i "D:/2/ipx-783-C.mp4" -vf fps=30 -c:v libx265 -preset medium -c:a aac -q:a 4 "D:/3/ipx-783-C.mp4"
 ffmpeg -i "D:/2/cawd-186-C.mp4" -vf fps=30 -c:v libx265 -preset medium -c:a aac -q:a 4 "D:/3/cawd-186-C.mp4"
 ffmpeg -i "D:/2/CJOD-310-C.mp4" -vf fps=30 -c:v libx265 -preset medium -c:a aac -q:a 4 "D:/3/CJOD-310-C.mp4"

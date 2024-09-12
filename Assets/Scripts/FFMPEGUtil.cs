@@ -189,13 +189,15 @@ public enum TestType
 public class FFMPEGUtil : MonoBehaviour
 {
     public static FFMPEGUtil Instance;
-    
+
     private const long MIN_LEN = 50L * 1024L * 1024L;
     private const long MAX_BIT = 2500000;
     private const long MAX_BIT_L = 1150000;
 
     public Dictionary<string, VideoInfo> VideoInfos = new Dictionary<string, VideoInfo>();
-    public Dictionary<string, Dictionary<string, VideoInfo>> SameNameVideoInfos = new Dictionary<string, Dictionary<string, VideoInfo>>();
+
+    public Dictionary<string, Dictionary<string, VideoInfo>> SameNameVideoInfos =
+        new Dictionary<string, Dictionary<string, VideoInfo>>();
 
     private static VideoInfo GetInfo(string path, string name)
     {
@@ -205,10 +207,15 @@ public class FFMPEGUtil : MonoBehaviour
         mi.Close();
         return videoInfo;
     }
-    
+
     void Awake()
     {
         Instance = this;
+    }
+
+    private void Start()
+    {
+        ReadHistory();
     }
 
     private void TryAddVideo(VideoInfo videoInfo)
@@ -256,7 +263,7 @@ public class FFMPEGUtil : MonoBehaviour
 
     private bool IsVideo(string str)
     {
-        return str.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) 
+        return str.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)
                || str.EndsWith(".mov", StringComparison.OrdinalIgnoreCase)
                || str.EndsWith(".avi", StringComparison.OrdinalIgnoreCase)
                || str.EndsWith(".mkv", StringComparison.OrdinalIgnoreCase)
@@ -266,7 +273,7 @@ public class FFMPEGUtil : MonoBehaviour
                || str.EndsWith(".3gp", StringComparison.OrdinalIgnoreCase)
                || str.EndsWith(".m4v", StringComparison.OrdinalIgnoreCase);
     }
-    
+
     public static void OpenFolder(string folderPath)
     {
         if (string.IsNullOrEmpty(folderPath)) return;
@@ -276,7 +283,7 @@ public class FFMPEGUtil : MonoBehaviour
         ProcessStartInfo psi = new ProcessStartInfo("Explorer.exe");
         psi.Arguments = folderPath;
         process.StartInfo = psi;
- 
+
         try
         {
             process.Start();
@@ -290,17 +297,17 @@ public class FFMPEGUtil : MonoBehaviour
             process?.Close();
         }
     }
-    
+
     public static void OpenFolderAndSelectedFile(string filePathAndName)
     {
         if (string.IsNullOrEmpty(filePathAndName)) return;
- 
+
         filePathAndName = filePathAndName.Replace("/", "\\");
         Process process = new Process();
         ProcessStartInfo psi = new ProcessStartInfo("Explorer.exe");
-        psi.Arguments = "/e,/select,"+filePathAndName;
+        psi.Arguments = "/e,/select," + filePathAndName;
         process.StartInfo = psi;
- 
+
         try
         {
             process.Start();
@@ -351,12 +358,12 @@ public class FFMPEGUtil : MonoBehaviour
             {
                 return 1;
             }
-            
+
             if (b.Width < 1920 && b.Bitrate > MAX_BIT_L)
             {
                 return 1;
             }
-            
+
             int c = b.Bitrate.CompareTo(a.Bitrate);
 
             if (c == 0)
@@ -367,7 +374,7 @@ public class FFMPEGUtil : MonoBehaviour
             return c;
         });
     }
-    
+
     private IEnumerator ScanPath(string path)
     {
         var drive = new DirectoryInfo($"{path}:\\");
@@ -376,7 +383,7 @@ public class FFMPEGUtil : MonoBehaviour
 
         foreach (var file in drive.GetDirectories())
         {
-            if (!file.FullName.Contains("$") 
+            if (!file.FullName.Contains("$")
                 && !file.FullName.Contains("System")
                 && !file.FullName.Contains("gradle")
                 && !file.FullName.Contains("My proj")
@@ -389,7 +396,7 @@ public class FFMPEGUtil : MonoBehaviour
                 allDir.Enqueue(file);
             }
         }
-        
+
         foreach (var file in drive.GetFiles())
         {
             if (file.Length > MIN_LEN && IsVideo(file.FullName))
@@ -405,22 +412,23 @@ public class FFMPEGUtil : MonoBehaviour
         while (allDir.Count > 0)
         {
             var dir = allDir.Dequeue();
-            
+
             foreach (var file in dir.GetDirectories())
             {
                 allDir.Enqueue(file);
                 total++;
             }
-            
+
             foreach (var file in dir.GetFiles())
             {
                 if (file.Length > MIN_LEN && IsVideo(file.FullName))
                 {
                     allFile.Add(file);
                 }
+
                 total++;
             }
-            
+
             Debug.Log($"扫描中：{dir.FullName}");
 
             if (total > count)
@@ -444,16 +452,16 @@ public class FFMPEGUtil : MonoBehaviour
         }
 
         Sort(videos);
-        
+
         StreamWriter sw;
         FileInfo fi = new FileInfo($"Assets/Resources/{path}.txt");
         sw = fi.CreateText();
-        
+
         foreach (var video in videos)
         {
             sw.WriteLine(video.ToTableStr());
         }
-        
+
         sw.Close();
         sw.Dispose();
         Debug.LogError($"扫描成功：{path}");
@@ -464,7 +472,7 @@ public class FFMPEGUtil : MonoBehaviour
     public string OutPutPath;
     public string MovePath;
     public bool UseH265 = true;
-    
+
     public string Encode(VideoInfo info)
     {
         string name = info.Name;
@@ -476,13 +484,14 @@ public class FFMPEGUtil : MonoBehaviour
             Debug.LogError($"{path}已存在，请删除！");
             return "";
         }
-        
+
         string scale = info.Width > 1920 ? ",scale=1920:1080" : "";
-        string order = $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx264 -preset medium -c:a aac -q:a 4 \"{OutPutPath}\\{name}.mp4\"";
+        string order =
+            $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx264 -preset medium -c:a aac -q:a 4 \"{OutPutPath}\\{name}.mp4\"";
         order = order.Replace("\\", "/");
         return order;
     }
-    
+
     public string Encode2(VideoInfo info)
     {
         string name = info.Name;
@@ -494,20 +503,21 @@ public class FFMPEGUtil : MonoBehaviour
             Debug.LogError($"{path}已存在，请删除！");
             return "";
         }
-        
+
         string scale = info.Width > 1920 ? ",scale=1920:1080" : "";
-        string order = $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx265 -preset medium -c:a aac -q:a 4 \"{OutPutPath}\\{name}.mp4\"";
+        string order =
+            $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx265 -preset medium -c:a aac -q:a 4 \"{OutPutPath}\\{name}.mp4\"";
         order = order.Replace("\\", "/");
         return order;
     }
-    
+
     public string Move2(VideoInfo info)
     {
         string order = $"mv \"{info.Path}\\{info.Name}\" \"{MovePath}\\\"";
         order = order.Replace("\\", "/");
         return order;
     }
-    
+
     public string Del(VideoInfo info)
     {
         string order = $"rm \"{info.Path}\\{info.Name}\"";
@@ -521,11 +531,11 @@ public class FFMPEGUtil : MonoBehaviour
         Sort(list);
 
         max = Mathf.Min(max, list.Count);
-        
+
         StreamWriter sw;
         FileInfo fi = new FileInfo($"Assets/Resources/encode.sh");
         sw = fi.CreateText();
-        
+
         for (int i = 0; i < max; i++)
         {
             if ((list[i].Bitrate < 1000 || list[i].Duration < 1000 || list[i].Width < 100)
@@ -540,7 +550,7 @@ public class FFMPEGUtil : MonoBehaviour
                 }
             }
         }
-        
+
         sw.Close();
         sw.Dispose();
         Debug.LogError("sh生成成功");
@@ -552,11 +562,11 @@ public class FFMPEGUtil : MonoBehaviour
         Sort(list);
 
         max = Mathf.Min(max, list.Count);
-        
+
         StreamWriter sw;
         FileInfo fi = new FileInfo($"Assets/Resources/move.sh");
         sw = fi.CreateText();
-        
+
         for (int i = 0; i < max; i++)
         {
             if ((list[i].Bitrate < 1000 || list[i].Duration < 1000 || list[i].Width < 100)
@@ -566,18 +576,18 @@ public class FFMPEGUtil : MonoBehaviour
                 sw.WriteLine(Move2(list[i]));
             }
         }
-        
+
         sw.Close();
         sw.Dispose();
         Debug.LogError("sh生成成功");
     }
-    
+
     public IEnumerator GenDelSH()
     {
         StreamWriter sw;
         FileInfo fi = new FileInfo($"Assets/Resources/del.sh");
         sw = fi.CreateText();
-        
+
         DirectoryInfo directoryInfo = new DirectoryInfo(OutPutPath);
 
         foreach (var file in directoryInfo.GetFiles())
@@ -585,7 +595,7 @@ public class FFMPEGUtil : MonoBehaviour
             if (VideoInfos.ContainsKey(file.Name))
             {
                 var path = $"{VideoInfos[file.Name].Path}\\{VideoInfos[file.Name].Name}";
-                
+
                 if (File.Exists(path))
                 {
                     var videoInfo = GetInfo(directoryInfo.FullName, file.Name);
@@ -612,7 +622,7 @@ public class FFMPEGUtil : MonoBehaviour
                 }
             }
         }
-        
+
         sw.Close();
         sw.Dispose();
         Debug.LogError("sh生成成功");
@@ -641,10 +651,10 @@ public class FFMPEGUtil : MonoBehaviour
         }
         else
         {
-            dict.Add(key, new List<MP4>{ mp4 });
+            dict.Add(key, new List<MP4> {mp4});
         }
     }
-    
+
     public void AddMp4(MP4 mp4)
     {
         Mp4s.Add(mp4);
@@ -660,11 +670,11 @@ public class FFMPEGUtil : MonoBehaviour
             AddMp4ToDict(mp4, mp4.Name, Non);
         }
     }
-    
+
     public void ReadTotal()
     {
         ClearMp4s();
-        
+
         var txt = Resources.Load<TextAsset>("total").text;
         txt = txt.Replace("\r", "");
         var ss = txt.Split("\n");
@@ -677,8 +687,9 @@ public class FFMPEGUtil : MonoBehaviour
                 AddMp4(mp4);
             }
         }
+
         return;
-        
+
         var reader = File.OpenText("Assets/Resources/total.txt");
 
         while (!reader.EndOfStream)
@@ -697,7 +708,7 @@ public class FFMPEGUtil : MonoBehaviour
 
         for (int i = 0; i < 26; i++)
         {
-            char a = (char)('A' + i);
+            char a = (char) ('A' + i);
             AddToTotal(a.ToString());
         }
 
@@ -707,12 +718,12 @@ public class FFMPEGUtil : MonoBehaviour
     public void AddToTotal(string tb)
     {
         var path = $"Assets/Resources/{tb}.txt";
-        
+
         if (!File.Exists(path))
         {
             return;
         }
-        
+
         var reader = File.OpenText(path);
 
         while (!reader.EndOfStream)
@@ -731,12 +742,12 @@ public class FFMPEGUtil : MonoBehaviour
         StreamWriter sw;
         FileInfo fi = new FileInfo("Assets/Resources/total.txt");
         sw = fi.CreateText();
-        
+
         foreach (var mp4 in Mp4s)
         {
             sw.WriteLine(mp4.ToTableStr());
         }
-        
+
         sw.Close();
         sw.Dispose();
         Debug.LogError("导出成功！");
@@ -760,17 +771,50 @@ public class FFMPEGUtil : MonoBehaviour
             {
                 return TestType.SamePre;
             }
-            
+
             return TestType.Pass;
         }
 
         return TestType.NotMatch;
     }
-    
-    public void TestFile(string tb)
+
+    private Dictionary<string, int> History = new Dictionary<string, int>();
+
+    private void ReadHistory()
+    {
+        var path = "Assets/Resources/history.txt";
+        
+        if (!File.Exists(path))
+        {
+            var sw = File.CreateText(path);
+            sw.Close();
+            sw.Dispose();
+        }
+        
+        var reader = File.OpenText(path);
+
+        while (!reader.EndOfStream)
+        {
+            var link = reader.ReadLine();
+            
+            if (string.IsNullOrEmpty(link))
+            {
+                continue;
+            }
+            
+            link = link.Trim();
+            History.Add(link, 1);
+        }
+        
+        reader.Close();
+        reader.Dispose();
+    }
+
+public void TestFile(string tb)
     {
         var reader = File.OpenText($"Assets/Resources/{tb}.txt");
         
+        var history = new FileInfo("Assets/Resources/history.txt").AppendText();
         var sw = new FileInfo($"Assets/Resources/{tb}_p.txt").CreateText();
         var sw_n = new FileInfo($"Assets/Resources/{tb}_n.txt").CreateText();
         var sw_w = new FileInfo($"Assets/Resources/{tb}_w.txt").CreateText();
@@ -778,6 +822,21 @@ public class FFMPEGUtil : MonoBehaviour
         while (!reader.EndOfStream)
         {
             var link = reader.ReadLine();
+
+            if (string.IsNullOrEmpty(link))
+            {
+                continue;
+            }
+
+            link = link.Trim();
+
+            if (History.ContainsKey(link))
+            {
+                continue;
+            }
+            
+            History.Add(link, 1);
+            history.WriteLine(link);
             var type = TestLink(link, out MP4 mp4);
 
             switch (type)
@@ -795,20 +854,15 @@ public class FFMPEGUtil : MonoBehaviour
                     sw.WriteLine(link);
                     break;
                 case TestType.SameSub:
-                    if (mp4.Pre.Contains("fc2"))
-                    {
-                        sw_w.WriteLine(link);
-                    }
-                    else
-                    {
-                        sw.WriteLine(link);
-                    }
+                    sw_w.WriteLine(link);
                     break;
             }
         }
 
         reader.Close();
         reader.Dispose();
+        history.Close();
+        history.Dispose();
         sw.Close();
         sw.Dispose();
         sw_n.Close();

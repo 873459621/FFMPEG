@@ -1,5 +1,3 @@
-magnet:?xt=urn:btih:eac56fd662958bc07292ee3422b4af2e2f8e288b&dn=[javdb.com]FC2-PPV-2351692
-magnet:?xt=urn:btih:64cd768aeb27b2c117e9cf9d2d1fe17a499cb19b&dn=[javdb.com]FC2-PPV-1200509.mp4
 magnet:?xt=urn:btih:31916af9567a07985f8c7277b8b61c07a86609a0&dn=[javdb.com]FC2 PPV 1299469 JD.mp4
 magnet:?xt=urn:btih:b11d82dd830f9640052639ec9e658e485fd6c34a&dn=[javdb.com]FC2-PPV-1348011
 magnet:?xt=urn:btih:5355c816be0d41e7c5c20611181193a7da331f0d&dn=[javdb.com]fc2ppv-1396936
@@ -18,7 +16,6 @@ magnet:?xt=urn:btih:fdcc34ff7215e5ccf14514b6b8efd4c3cee3df58&dn=[javdb.com]FC2PP
 magnet:?xt=urn:btih:742997b5ee598bc26ec14c22e4d542a4b1176a79&dn=[javdb.com]Fc2 PPV 1864742
 magnet:?xt=urn:btih:6beb52293c4975c1c69703212c8269458e68aa96&dn=[javdb.com]Fc2 PPV 1888724
 magnet:?xt=urn:btih:69de33f480fcb65a16d904ab60cb3357d96078e8&dn=[javdb.com]FC2-2020894
-magnet:?xt=urn:btih:2a384c1e390ee9aabcba2c85e3e59657da20ba15&dn=[javdb.com]FC2-2142959
 magnet:?xt=urn:btih:6afaa1fb97c694148eef705dffd264d9bde585f8&dn=[javdb.com]FC2-2246202
 magnet:?xt=urn:btih:0ff17204e04de3341cbf292a8d1bf6e947b1aa3f&dn=[javdb.com]FC2-2316478
 magnet:?xt=urn:btih:821dc9d9a7afdeb7bf9a9c1e892ea29663a98cc8&dn=[javdb.com]FC2-2366404
@@ -26,8 +23,6 @@ magnet:?xt=urn:btih:fb1f58ac004b474ea889a1775233a256bfc55b0a&dn=[javdb.com]FC2-2
 magnet:?xt=urn:btih:4f75571f5c857cf40580f42ddf0f79feac075607&dn=[javdb.com]FC2-2448481
 magnet:?xt=urn:btih:c83b34a1021695814b01c5655d719db8b94e2044&dn=[javdb.com]IPZZ-242-C.torrent
 magnet:?xt=urn:btih:df756d843728d88fd1def14aff7bac7a2a17df69&dn=[javdb.com]IPZZ-261-C.torrent
-magnet:?xt=urn:btih:7c756de16f775accf2a8512c1df643bbc138c058&dn=[javdb.com]MIDV-464-C.torrent
 magnet:?xt=urn:btih:762dd6a660f6d8dd57dc4556dc05f693c11c82b4&dn=[javdb.com]MIDV-472-C.torrent
-magnet:?xt=urn:btih:2c86a716c51fe4a06e89ca86c938d1c2d259015e&dn=[javdb.com]MIDV-502-C.torrent
 magnet:?xt=urn:btih:46bfef7e533d1ad4bf75f64a9a08f137903bc441&dn=[javdb.com]MIDV-518-C.torrent
 magnet:?xt=urn:btih:d9430f15be83511c796275f24f54b2db9b3506cd&dn=[javdb.com]MIMK-136-C.torrent
