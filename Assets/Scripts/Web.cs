@@ -34,6 +34,7 @@ public class Web : MonoBehaviour
 
     private void Start()
     {
+        // ngrok http http://localhost:8989
         url = PlayerPrefs.GetString("url", "https://1a17-116-51-23-163.ngrok-free.app/post_endpoint");
 
         AddText("url");
