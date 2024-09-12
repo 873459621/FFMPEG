@@ -47,7 +47,7 @@ public class UI : MonoBehaviour
         
         btn_del.onClick.AddListener(() =>
         {
-            FFMPEGUtil.Instance.GenDelSH();
+            StartCoroutine(FFMPEGUtil.Instance.GenDelSH());
         });
     }
 

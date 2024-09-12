@@ -572,7 +572,7 @@ public class FFMPEGUtil : MonoBehaviour
         Debug.LogError("sh生成成功");
     }
     
-    public void GenDelSH()
+    public IEnumerator GenDelSH()
     {
         StreamWriter sw;
         FileInfo fi = new FileInfo($"Assets/Resources/del.sh");
@@ -588,7 +588,27 @@ public class FFMPEGUtil : MonoBehaviour
                 
                 if (File.Exists(path))
                 {
-                    sw.WriteLine(Del(VideoInfos[file.Name]));
+                    var videoInfo = GetInfo(directoryInfo.FullName, file.Name);
+
+                    if (videoInfo != null)
+                    {
+                        var d = videoInfo.Duration - VideoInfos[file.Name].Duration;
+
+                        if (d > 1000 || d < -1000)
+                        {
+                            Debug.LogError($"时长不对：{directoryInfo.FullName}\\{file.Name}");
+                        }
+                        else
+                        {
+                            sw.WriteLine(Del(VideoInfos[file.Name]));
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError($"无法解析：{directoryInfo.FullName}\\{file.Name}");
+                    }
+
+                    yield return null;
                 }
             }
         }
