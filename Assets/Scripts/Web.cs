@@ -26,8 +26,24 @@ public class Web : MonoBehaviour
     
     private void AddText(string name)
     {
-        Texts.Add(name, transform.Find(name).GetComponent<Text>());
+        var text = transform.Find(name).GetComponent<Text>();
+        text.text = "";
+        Texts.Add(name, text);
     }
+    
+    private void ShowHint(string key, string hint)
+    {
+        StartCoroutine(Hint(key, hint));
+    }
+
+    private IEnumerator Hint(string key, string hint)
+    {
+        Texts[key].text = hint;
+        yield return new WaitForSeconds(2);
+        Texts[key].text = "";
+    }
+    
+    public string DefaultUrl = "https://a0cb-116-51-23-163.ngrok-free.app/post_endpoint";
     
     private Dictionary<string, int> MsgCache = new Dictionary<string, int>();
     private string url;
@@ -35,14 +51,14 @@ public class Web : MonoBehaviour
     private void Start()
     {
         // ngrok http http://localhost:8989
-        url = PlayerPrefs.GetString("url", "https://1a17-116-51-23-163.ngrok-free.app/post_endpoint");
+        url = PlayerPrefs.GetString("url", DefaultUrl);
 
         AddText("url");
         AddText("hint");
+        AddText("hint2");
         AddInput("msg");
 
         Texts["url"].text = url;
-        Texts["hint"].text = "";
         
         AddListener("btn_send", () =>
         {
@@ -60,7 +76,7 @@ public class Web : MonoBehaviour
                 Texts["url"].text = url;
                 PlayerPrefs.SetString("url", url);
                 InputFields["msg"].text = "";
-                ShowHint("更新成功！");
+                ShowHint("hint","更新成功！");
             }
         });
         
@@ -75,24 +91,13 @@ public class Web : MonoBehaviour
         });
     }
 
-    private void ShowHint(string hint)
-    {
-        StartCoroutine(Hint(hint));
-    }
-
-    private IEnumerator Hint(string hint)
-    {
-        Texts["hint"].text = hint;
-        yield return new WaitForSeconds(2);
-        Texts["hint"].text = "";
-    }
-
     private string lastMsg;
     
     private void SaveMsg(string msg)
     {
         if (string.IsNullOrEmpty(msg) || MsgCache.ContainsKey(msg))
         {
+            ShowHint("hint2","链接为空或重复！");
             return;
         }
         
@@ -118,13 +123,13 @@ public class Web : MonoBehaviour
             {
                 if (request.downloadHandler.text.Equals("Success"))
                 {
-                    ShowHint($"消息发送成功：{lastMsg}");
+                    ShowHint("hint",$"消息发送成功：{lastMsg}");
                 }
-                Debug.Log("Response: " + request.downloadHandler.text);
+                ShowHint("hint2",$"回复：{request.downloadHandler.text}");
             }
             else
             {
-                Debug.LogError("Error: " + request.error);
+                ShowHint("hint2",$"错误：{request.error}");
             }
         };
     }
