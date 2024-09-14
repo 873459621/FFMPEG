@@ -487,7 +487,7 @@ public class FFMPEGUtil : MonoBehaviour
 
         string scale = info.Width > 1920 ? ",scale=1920:1080" : "";
         string order =
-            $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx264 -preset medium -c:a aac -q:a 4 \"{OutPutPath}\\{name}.mp4\"";
+            $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx264 -preset medium -c:a aac \"{OutPutPath}\\{name}.mp4\"";
         order = order.Replace("\\", "/");
         return order;
     }
@@ -506,7 +506,7 @@ public class FFMPEGUtil : MonoBehaviour
 
         string scale = info.Width > 1920 ? ",scale=1920:1080" : "";
         string order =
-            $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx265 -preset medium -c:a aac -q:a 4 \"{OutPutPath}\\{name}.mp4\"";
+            $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx265 -preset medium -c:a aac \"{OutPutPath}\\{name}.mp4\"";
         order = order.Replace("\\", "/");
         return order;
     }
