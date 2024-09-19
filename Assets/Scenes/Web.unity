@@ -1605,7 +1605,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e9b6e53548400149868b704e0b07b73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DefaultUrl: https://a0cb-116-51-23-163.ngrok-free.app/post_endpoint
+  DefaultUrl: https://6178-116-51-23-163.ngrok-free.app
 --- !u!1 &1939261019
 GameObject:
   m_ObjectHideFlags: 0

@@ -835,6 +835,8 @@ public void TestFile(string tb)
         var sw_n = new FileInfo($"Assets/Resources/{tb}_n.txt").CreateText();
         var sw_w = new FileInfo($"Assets/Resources/{tb}_w.txt").CreateText();
 
+        Dictionary<string, List<MP4>> cache = new Dictionary<string, List<MP4>>();
+
         while (!reader.EndOfStream)
         {
             var link = reader.ReadLine();
@@ -855,6 +857,35 @@ public void TestFile(string tb)
             history.WriteLine(link);
             var type = TestLink(link, out MP4 mp4);
 
+            if (cache.TryGetValue(mp4.Sub, out var list))
+            {
+                bool flag = true;
+                
+                foreach (var v in list)
+                {
+                    if (v.Pre.Equals(mp4.Pre))
+                    {
+                        sw_w.WriteLine(link);
+                        Debug.LogError($"可能重复的链接：{link}");
+                        flag = false;
+                        break;
+                    }
+                }
+
+                if (flag)
+                {
+                    list.Add(mp4);
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                cache.Add(mp4.Sub, new List<MP4>(){mp4});
+            }
+            
             switch (type)
             {
                 case TestType.Pass:
@@ -1086,5 +1117,103 @@ public void TestFile(string tb)
         sw.Close();
         sw.Dispose();
         Debug.LogError("sh生成成功");
+    }
+    
+    private const long MIN_IMG_LEN = 4L * 1024L * 1024L;
+    
+    private bool IsImage(string str)
+    {
+        return str.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+               || str.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+               || str.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase)
+               || str.EndsWith(".tga", StringComparison.OrdinalIgnoreCase)
+               || str.EndsWith(".tif", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void ScanImage(string path)
+    {
+        StartCoroutine(ImgScanPath(path));
+    }
+    
+    private IEnumerator ImgScanPath(string path)
+    {
+        var drive = new DirectoryInfo($"{path}");
+        Queue<DirectoryInfo> allDir = new Queue<DirectoryInfo>();
+        List<FileInfo> allFile = new List<FileInfo>();
+
+        foreach (var file in drive.GetDirectories())
+        {
+            if (!file.FullName.Contains("$")
+                && !file.FullName.Contains("System")
+                && !file.FullName.Contains("gradle")
+                && !file.FullName.Contains("My proj")
+                && !file.FullName.Contains("proj")
+                && !file.FullName.Contains("SDK")
+                && !file.FullName.Contains("SteamLibrary")
+                && !file.FullName.Contains("miHoYo")
+                && !file.FullName.Contains("found.000"))
+            {
+                allDir.Enqueue(file);
+            }
+        }
+
+        foreach (var file in drive.GetFiles())
+        {
+            if (file.Length > MIN_IMG_LEN && IsImage(file.FullName))
+            {
+                allFile.Add(file);
+            }
+        }
+
+        yield return null;
+        int total = 0;
+        int count = 100;
+
+        while (allDir.Count > 0)
+        {
+            var dir = allDir.Dequeue();
+
+            foreach (var file in dir.GetDirectories())
+            {
+                allDir.Enqueue(file);
+                total++;
+            }
+
+            foreach (var file in dir.GetFiles())
+            {
+                if (file.Length > MIN_IMG_LEN && IsImage(file.FullName))
+                {
+                    allFile.Add(file);
+                }
+
+                total++;
+            }
+
+            Debug.Log($"扫描中：{dir.FullName}");
+
+            if (total > count)
+            {
+                count += 100;
+                Debug.LogError($"扫描中：{dir.FullName}");
+                yield return null;
+            }
+        }
+
+        yield return null;
+
+        StreamWriter sw;
+        FileInfo fi = new FileInfo($"Assets/Resources/img.sh");
+        sw = fi.CreateText();
+
+        foreach (var file in allFile)
+        {
+            var name = file.Name.Substring(0, file.Name.LastIndexOf('.'));
+            sw.WriteLine($"ffmpeg -i \"{file.FullName}\" -q 1 \"{file.Directory.FullName}\\a_{name}.jpg\"".Replace("\\", "/"));
+        }
+
+        sw.Close();
+        sw.Dispose();
+        Debug.LogError($"图片扫描成功：{path}");
+        yield return null;
     }
 }

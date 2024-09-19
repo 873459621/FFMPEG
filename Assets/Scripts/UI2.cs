@@ -101,6 +101,11 @@ public class UI2 : MonoBehaviour
         {
             SceneManager.LoadScene(0);
         });
+        
+        AddListener("btn_img", () =>
+        {
+            FFMPEGUtil.Instance.ScanImage(Input1.text);
+        });
     }
 
     private void AddListener(string name, Action a)

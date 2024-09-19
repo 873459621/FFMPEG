@@ -43,7 +43,8 @@ public class Web : MonoBehaviour
         Texts[key].text = "";
     }
     
-    public string DefaultUrl = "https://a0cb-116-51-23-163.ngrok-free.app/post_endpoint";
+    public string DefaultUrl = "https://6178-116-51-23-163.ngrok-free.app";
+    private const string PostFunc = "/post_endpoint";
     
     private Dictionary<string, int> MsgCache = new Dictionary<string, int>();
     private string url;
@@ -108,7 +109,7 @@ public class Web : MonoBehaviour
         form.AddField("key", "hhw_1995");
         form.AddField("msg", msg);
 
-        UnityWebRequest request = UnityWebRequest.Post(url, form);
+        UnityWebRequest request = UnityWebRequest.Post(url + PostFunc, form);
         request.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         SendRequest(request);
     }
