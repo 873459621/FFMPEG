@@ -106,6 +106,11 @@ public class UI2 : MonoBehaviour
         {
             FFMPEGUtil.Instance.ScanImage(Input1.text);
         });
+        
+        AddListener("btn_test", () =>
+        {
+            FFMPEGUtil.Instance.TestDir(Input1.text);
+        });
     }
 
     private void AddListener(string name, Action a)

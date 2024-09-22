@@ -271,6 +271,9 @@ public class FFMPEGUtil : MonoBehaviour
                || str.EndsWith(".rmvb", StringComparison.OrdinalIgnoreCase)
                || str.EndsWith(".flv", StringComparison.OrdinalIgnoreCase)
                || str.EndsWith(".3gp", StringComparison.OrdinalIgnoreCase)
+               || str.EndsWith(".mpg", StringComparison.OrdinalIgnoreCase)
+               || str.EndsWith(".mts", StringComparison.OrdinalIgnoreCase)
+               || str.EndsWith(".vob", StringComparison.OrdinalIgnoreCase)
                || str.EndsWith(".m4v", StringComparison.OrdinalIgnoreCase);
     }
 
@@ -467,6 +470,95 @@ public class FFMPEGUtil : MonoBehaviour
         Debug.LogError($"扫描成功：{path}");
         yield return null;
         UpdateUI();
+    }
+
+    public void TestDir(string path)
+    {
+        StartCoroutine(TestDirCo(path));
+    }
+
+    private IEnumerator TestDirCo(string path)
+    {
+        var drive = new DirectoryInfo($"{path}");
+        Queue<DirectoryInfo> allDir = new Queue<DirectoryInfo>();
+        List<FileInfo> allFile = new List<FileInfo>();
+
+        foreach (var file in drive.GetDirectories())
+        {
+            if (!file.FullName.Contains("$")
+                && !file.FullName.Contains("System")
+                && !file.FullName.Contains("gradle")
+                && !file.FullName.Contains("My proj")
+                && !file.FullName.Contains("proj")
+                && !file.FullName.Contains("SDK")
+                && !file.FullName.Contains("SteamLibrary")
+                && !file.FullName.Contains("miHoYo")
+                && !file.FullName.Contains("found.000"))
+            {
+                allDir.Enqueue(file);
+            }
+        }
+
+        foreach (var file in drive.GetFiles())
+        {
+            if (IsVideo(file.FullName))
+            {
+                allFile.Add(file);
+            }
+        }
+
+        yield return null;
+        int total = 0;
+        int count = 100;
+
+        while (allDir.Count > 0)
+        {
+            var dir = allDir.Dequeue();
+
+            foreach (var file in dir.GetDirectories())
+            {
+                allDir.Enqueue(file);
+                total++;
+            }
+
+            foreach (var file in dir.GetFiles())
+            {
+                if (IsVideo(file.FullName))
+                {
+                    allFile.Add(file);
+                }
+
+                total++;
+            }
+
+            Debug.Log($"扫描中：{dir.FullName}");
+
+            if (total > count)
+            {
+                count += 100;
+                Debug.Log($"扫描中：{dir.FullName}");
+                yield return null;
+            }
+        }
+
+        yield return null;
+
+        foreach (var file in allFile)
+        {
+            var type = TestLink(file.FullName, out MP4 mp4);
+            
+            switch (type)
+            {
+                case TestType.SameName:
+                    Debug.LogError($"同名文件：{file.FullName}");
+                    break;
+                case TestType.SameSub:
+                    Debug.LogWarning($"同ID文件：{file.FullName}");
+                    break;
+            }
+        }
+        
+        yield return null;
     }
 
     public string OutPutPath;
