@@ -648,7 +648,7 @@ public class FFMPEGUtil : MonoBehaviour
         Debug.LogError("sh生成成功");
     }
 
-    public void GenMoveSH(int max)
+    public void GenMoveSH(int max, bool isAll = false)
     {
         var list = VideoInfos.Values.ToList();
         Sort(list);
@@ -661,7 +661,7 @@ public class FFMPEGUtil : MonoBehaviour
 
         for (int i = 0; i < max; i++)
         {
-            if ((list[i].Bitrate < 1000 || list[i].Duration < 1000 || list[i].Width < 100)
+            if (isAll || (list[i].Bitrate < 1000 || list[i].Duration < 1000 || list[i].Width < 100)
                 || (list[i].Width < 1920 && list[i].Bitrate > MAX_BIT_L)
                 || (list[i].Width >= 1920 && list[i].Bitrate > MAX_BIT))
             {
