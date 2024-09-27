@@ -394,7 +394,8 @@ public class FFMPEGUtil : MonoBehaviour
                 && !file.FullName.Contains("SDK")
                 && !file.FullName.Contains("SteamLibrary")
                 && !file.FullName.Contains("miHoYo")
-                && !file.FullName.Contains("found.000"))
+                && !file.FullName.Contains("found.000")
+                && !file.FullName.Contains("Recovery"))
             {
                 allDir.Enqueue(file);
             }
@@ -493,7 +494,8 @@ public class FFMPEGUtil : MonoBehaviour
                 && !file.FullName.Contains("SDK")
                 && !file.FullName.Contains("SteamLibrary")
                 && !file.FullName.Contains("miHoYo")
-                && !file.FullName.Contains("found.000"))
+                && !file.FullName.Contains("found.000")
+                && !file.FullName.Contains("Recovery"))
             {
                 allDir.Enqueue(file);
             }
@@ -1243,7 +1245,8 @@ public void TestFile(string tb)
                 && !file.FullName.Contains("SDK")
                 && !file.FullName.Contains("SteamLibrary")
                 && !file.FullName.Contains("miHoYo")
-                && !file.FullName.Contains("found.000"))
+                && !file.FullName.Contains("found.000")
+                && !file.FullName.Contains("Recovery"))
             {
                 allDir.Enqueue(file);
             }
