@@ -782,18 +782,18 @@ public class FFMPEGUtil : MonoBehaviour
             }
         }
 
-        return;
+        // return;
 
-        var reader = File.OpenText("Assets/Resources/total.txt");
-
-        while (!reader.EndOfStream)
-        {
-            var mp4 = MP4.ParseTableStr(reader.ReadLine());
-            AddMp4(mp4);
-        }
-
-        reader.Close();
-        reader.Dispose();
+        // var reader = File.OpenText("Assets/Resources/total.txt");
+        //
+        // while (!reader.EndOfStream)
+        // {
+        //     var mp4 = MP4.ParseTableStr(reader.ReadLine());
+        //     AddMp4(mp4);
+        // }
+        //
+        // reader.Close();
+        // reader.Dispose();
     }
 
     public void GenTotal()

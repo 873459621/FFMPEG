@@ -12,6 +12,7 @@ public enum StockType
     Long,
     US,
     HK,
+    A,
 }
 
 public enum SellType
@@ -56,6 +57,8 @@ public class StockData
     public double FloatingProfit;
     //浮动收益率
     public double FloatingRate;
+    //当前价格
+    public double CurUnit;
 
     public StockData()
     {
@@ -89,10 +92,21 @@ public class StockData
         SellType = SellDate >= BuyDate ? SellType.Sold : SellType.Hold;
         Sum = Unit * Num;
         Rate = Profit / Sum;
+
+        if (StockDataManager.Instance.CurUnits.TryGetValue(Code, out double d))
+        {
+            CurUnit = d;
+        }
+
+        if (CurUnit > 0)
+        {
+            FloatingProfit = (CurUnit - Unit) * Num;
+            FloatingRate = FloatingProfit / Sum;
+        }
     }
     
     public override string ToString()
     {
-        return $"{(int)Type},{Code},{Name},{Num},{Unit:f3},{Profit:f2},{BuyDate.ToShortDateString()},{SellDate.ToShortDateString()}";
+        return $"{(int)Type},{Code},{Name},{Num},{Unit:f4},{Profit:f2},{BuyDate.ToShortDateString()},{SellDate.ToShortDateString()}";
     }
 }

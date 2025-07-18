@@ -85,7 +85,16 @@ public class StockUI : UIBase
 
     public void RefreshList()
     {
-        var stockDatas = StockDataManager.Instance.GetStockDatas((StockType)GetDropdownId("stocktype"), (SellType)GetDropdownId("selltype"));
+        var stockType = (StockType)GetDropdownId("stocktype");
+        var sellType = (SellType)GetDropdownId("selltype");
+        
+        var stockDatas = StockDataManager.Instance.GetStockDatas(stockType, sellType);
+
+        double totalSum = 0;
+        double historyProfit = 0;
+        double totalFloatingProfit = 0;
+
+        double exchange = 1;
         
         for (int i = 0; i < stockDatas.Count; i++)
         {
@@ -100,11 +109,43 @@ public class StockUI : UIBase
                 item.Init(stockDatas[i]);
                 items.Add(item);
             }
+
+            if (stockType == StockType.All && stockDatas[i].Type == StockType.US)
+            {
+                exchange = StockDataManager.Instance.US_Exchange;
+            }
+            else if (stockType == StockType.All && stockDatas[i].Type == StockType.HK)
+            {
+                exchange = StockDataManager.Instance.HK_Exchange;
+            }
+            else
+            {
+                exchange = 1;
+            }
+
+            if (stockDatas[i].SellType != SellType.Sold)
+            {
+                totalSum += stockDatas[i].Sum * exchange;
+                totalFloatingProfit += stockDatas[i].FloatingProfit * exchange;
+            }
+            else
+            {
+                historyProfit += stockDatas[i].Profit * exchange;
+            }
         }
 
         for (int i = stockDatas.Count; i < items.Count; i++)
         {
             items[i].gameObject.SetActive(false);
+        }
+
+        if (sellType == SellType.Sold)
+        {
+            GetText("msg").text = $"历史盈亏：{historyProfit.ToString("f2")}";
+        }
+        else
+        {
+            GetText("msg").text = $"总仓位：{totalSum.ToString("f2")}    浮盈：{totalFloatingProfit.ToString("f2")}    浮盈率：{(totalFloatingProfit / totalSum * 100).ToString("f2")}%\n总盈利：{historyProfit.ToString("f2")}    总盈利（浮动）：{(totalFloatingProfit + historyProfit).ToString("f2")}";
         }
     }
 
@@ -116,9 +157,27 @@ public class StockUI : UIBase
         GetInput("code").text = stockData.Code;
         GetInput("name").text = stockData.Name;
         GetInput("num").text = stockData.Num.ToString();
-        GetInput("unit").text = stockData.Unit.ToString("f3");
+        GetInput("unit").text = stockData.Unit.ToString("f4");
         GetInput("profit").text = stockData.Profit.ToString("f2");
         GetInput("buy").text = stockData.BuyDate.ToShortDateString();
         GetInput("sell").text = stockData.SellDate.ToShortDateString();
+    }
+
+    public void Sell(StockData stockData)
+    {
+        double d = GetInputDouble("profit");
+
+        if (d == 0)
+        {
+            return;
+        }
+        
+        stockData.SellDate = DateTime.Now;
+        stockData.Profit = d;
+        stockData.Calc();
+        
+        StockDataManager.Instance.SaveAll();
+        
+        RefreshList();
     }
 }
