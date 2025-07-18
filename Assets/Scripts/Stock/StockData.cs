@@ -53,12 +53,22 @@ public class StockData
     //收益率
     public double Rate;
     
+    //当前价格
+    public double CurUnit;
     //浮盈
     public double FloatingProfit;
     //浮动收益率
     public double FloatingRate;
-    //当前价格
-    public double CurUnit;
+    //浮动仓位
+    public double FloatingSum;
+    //人民币仓位
+    public double ExchangeSum;
+    //人民币浮动仓位
+    public double ExchangeFloatingSum;
+    //人民币收益
+    public double ExchangeProfit;
+    //人民币浮动收益
+    public double ExchangeFloatingProfit;
 
     public StockData()
     {
@@ -103,6 +113,24 @@ public class StockData
             FloatingProfit = (CurUnit - Unit) * Num;
             FloatingRate = FloatingProfit / Sum;
         }
+
+        FloatingSum = Sum + FloatingProfit;
+        
+        double exchange = 1;
+        
+        if (Type == StockType.US)
+        {
+            exchange = StockDataManager.Instance.US_Exchange;
+        }
+        else if (Type == StockType.HK)
+        {
+            exchange = StockDataManager.Instance.HK_Exchange;
+        }
+
+        ExchangeSum = exchange * Sum;
+        ExchangeProfit = exchange * Profit;
+        ExchangeFloatingSum = exchange * FloatingSum;
+        ExchangeFloatingProfit = exchange * FloatingProfit;
     }
     
     public override string ToString()

@@ -17,30 +17,47 @@ public class StockDataManager : MonoBehaviour
     public Dictionary<string, double> CurUnits = new Dictionary<string, double>();
 
     public Dictionary<string, StockData> HoldStockDatas = new Dictionary<string, StockData>();
+    public Dictionary<string, StockData> SoldStockDatas = new Dictionary<string, StockData>();
 
     public int Index = 0;
 
+    private double us_exchange = 0;
+    
     public double US_Exchange {
         get
         {
-            return double.Parse(PlayerPrefs.GetString("US_Exchange", "7.2"));
+            if (us_exchange == 0)
+            {
+                us_exchange = double.Parse(PlayerPrefs.GetString("US_Exchange", "7.2"));
+            }
+            
+            return us_exchange;
         }
 
         set
         {
+            us_exchange = value;
             PlayerPrefs.SetString("US_Exchange", value.ToString());
             Debug.Log($"美元汇率更新：{US_Exchange}");
         }
     }
     
+    private double hk_exchange = 0;
+    
     public double HK_Exchange {
         get
         {
-            return double.Parse(PlayerPrefs.GetString("HK_Exchange", "0.9"));
+            if (hk_exchange == 0)
+            {
+                hk_exchange = double.Parse(PlayerPrefs.GetString("HK_Exchange", "0.9"));
+            }
+            
+            return hk_exchange;
         }
 
         set
         {
+            hk_exchange = value;
             PlayerPrefs.SetString("HK_Exchange", value.ToString());
             Debug.Log($"港元汇率更新：{HK_Exchange}");
         }
@@ -198,6 +215,63 @@ public class StockDataManager : MonoBehaviour
                 HoldStockDatas[kv.Value.Code] = stockData;
             }
         }
+    }
+    
+    public void CalcSoldStockDatas()
+    {
+        SoldStockDatas.Clear();
+        
+        foreach (var kv in StockDatas)
+        {
+            if (kv.Value.SellType == SellType.Sold && !SoldStockDatas.TryAdd(kv.Value.Code, kv.Value))
+            {
+                var oldData = SoldStockDatas[kv.Value.Code];
+                StockData stockData = new StockData()
+                {
+                    Type = oldData.Type,
+                    Code = oldData.Code,
+                    Name = oldData.Name,
+                    Num = oldData.Num + kv.Value.Num,
+                    Unit = (oldData.Unit * oldData.Num + kv.Value.Unit * kv.Value.Num) / (oldData.Num + kv.Value.Num),
+                    Profit = oldData.Profit + kv.Value.Profit,
+                    BuyDate = oldData.BuyDate > kv.Value.BuyDate ? kv.Value.BuyDate : oldData.BuyDate,
+                    SellDate = oldData.SellDate > kv.Value.SellDate ? oldData.SellDate : kv.Value.SellDate,
+                };
+                stockData.Init();
+                SoldStockDatas[kv.Value.Code] = stockData;
+            }
+        }
+    }
+    
+    public List<StockData> GetSoldStockDatas(StockType stockType = StockType.All, SellType sellType = SellType.All)
+    {
+        List<StockData> stockDatas = new List<StockData>();
+
+        foreach (var kv in SoldStockDatas)
+        {
+            if (stockType != StockType.All && kv.Value.Type != stockType)
+            {
+                if (stockType == StockType.A && (kv.Value.Type == StockType.Short || kv.Value.Type == StockType.Mid || kv.Value.Type == StockType.Long))
+                {
+                    
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            
+            if (sellType != SellType.All && kv.Value.SellType != sellType)
+            {
+                continue;
+            }
+
+            stockDatas.Add(kv.Value);
+        }
+        
+        stockDatas.Sort((a, b) => a.Profit.CompareTo(b.Profit));
+
+        return stockDatas;
     }
     
     public List<StockData> GetHoldStockDatas(StockType stockType = StockType.All, SellType sellType = SellType.All)

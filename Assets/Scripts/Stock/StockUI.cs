@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,6 +14,8 @@ public class StockUI : UIBase
     private List<StockItem> items = new List<StockItem>();
 
     private StockData curStockData;
+
+    public StockType CurStockType;
 
     private void Awake()
     {
@@ -79,6 +82,9 @@ public class StockUI : UIBase
         });
         
         AddListener("btn_show", RefreshList);
+
+        GetDropdown("stocktype").value = (int)StockType.All;
+        GetDropdown("selltype").value = (int)SellType.Hold;
         
         RefreshList();
     }
@@ -87,15 +93,34 @@ public class StockUI : UIBase
     {
         var stockType = (StockType)GetDropdownId("stocktype");
         var sellType = (SellType)GetDropdownId("selltype");
+
+        CurStockType = stockType;
         
-        bool merge = GetToggle("merge").isOn && sellType == SellType.Hold;
+        bool merge = GetToggle("merge").isOn;
+
+        List<StockData> stockDatas;
 
         if (merge)
         {
-            StockDataManager.Instance.CalcHoldStockDatas();
+            if (sellType == SellType.Hold)
+            {
+                StockDataManager.Instance.CalcHoldStockDatas();
+                stockDatas = StockDataManager.Instance.GetHoldStockDatas(stockType, sellType);
+            }
+            else if (sellType == SellType.Sold)
+            {
+                StockDataManager.Instance.CalcSoldStockDatas();
+                stockDatas = StockDataManager.Instance.GetSoldStockDatas(stockType, sellType);
+            }
+            else
+            {
+                stockDatas = StockDataManager.Instance.GetStockDatas(stockType, sellType);
+            }
         }
-        
-        var stockDatas = merge ? StockDataManager.Instance.GetHoldStockDatas(stockType, sellType) : StockDataManager.Instance.GetStockDatas(stockType, sellType);
+        else
+        {
+            stockDatas = StockDataManager.Instance.GetStockDatas(stockType, sellType);
+        }
 
         if (GetToggle("dsum").isOn)
         {
