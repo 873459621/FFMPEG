@@ -88,7 +88,63 @@ public class StockUI : UIBase
         var stockType = (StockType)GetDropdownId("stocktype");
         var sellType = (SellType)GetDropdownId("selltype");
         
-        var stockDatas = StockDataManager.Instance.GetStockDatas(stockType, sellType);
+        bool merge = GetToggle("merge").isOn && sellType == SellType.Hold;
+
+        if (merge)
+        {
+            StockDataManager.Instance.CalcHoldStockDatas();
+        }
+        
+        var stockDatas = merge ? StockDataManager.Instance.GetHoldStockDatas(stockType, sellType) : StockDataManager.Instance.GetStockDatas(stockType, sellType);
+
+        if (GetToggle("dsum").isOn)
+        {
+            stockDatas.Sort((a, b) => a.Sum.CompareTo(b.Sum));
+        }
+        
+        if (GetToggle("dprofit").isOn)
+        {
+            if (sellType == SellType.Hold)
+            {
+                stockDatas.Sort((a, b) => a.FloatingProfit.CompareTo(b.FloatingProfit));
+            }
+            else
+            {
+                stockDatas.Sort((a, b) => a.Profit.CompareTo(b.Profit));
+            }
+        }
+        
+        if (GetToggle("drate").isOn)
+        {
+            if (sellType == SellType.Hold)
+            {
+                stockDatas.Sort((a, b) => a.FloatingRate.CompareTo(b.FloatingRate));
+            }
+            else
+            {
+                stockDatas.Sort((a, b) => a.Rate.CompareTo(b.Rate));
+            }
+        }
+        
+        if (GetToggle("dbuy").isOn)
+        {
+            stockDatas.Sort((a, b) => a.BuyDate.CompareTo(b.BuyDate));
+        }
+        
+        if (GetToggle("dsell").isOn && sellType == SellType.Sold)
+        {
+            stockDatas.Sort((a, b) => a.SellDate.CompareTo(b.SellDate));
+        }
+        
+        if (GetToggle("dfsum").isOn && sellType == SellType.Hold)
+        {
+            stockDatas.Sort((a, b) => (a.Sum + a.FloatingProfit).CompareTo(b.Sum + b.FloatingProfit));
+        }
+        
+        if (!GetToggle("dir").isOn)
+        {
+            stockDatas.Reverse();
+        }
 
         double totalSum = 0;
         double historyProfit = 0;
@@ -167,7 +223,7 @@ public class StockUI : UIBase
     {
         double d = GetInputDouble("profit");
 
-        if (d == 0)
+        if (d == 0 || !StockDataManager.Instance.StockDatas.ContainsKey(stockData.Id))
         {
             return;
         }

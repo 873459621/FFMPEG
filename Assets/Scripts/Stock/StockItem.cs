@@ -38,6 +38,7 @@ public class StockItem : UIBase
             GetText("rate").text = (stockData.Rate * 100).ToString("f2") + "%";
             GetButton("btn_sell").gameObject.SetActive(false);
             GetText("sell").text = stockData.SellDate.ToShortDateString();
+            GetText("fsum").text = "";
         }
         else
         {
@@ -45,6 +46,7 @@ public class StockItem : UIBase
             GetText("rate").text = (stockData.FloatingRate * 100).ToString("f2") + "%";
             GetButton("btn_sell").gameObject.SetActive(true);
             GetText("sell").text = $"{stockData.CurUnit.ToString("f4")}";
+            GetText("fsum").text = (stockData.Sum + stockData.FloatingProfit).ToString("f2");
         }
     }
 }

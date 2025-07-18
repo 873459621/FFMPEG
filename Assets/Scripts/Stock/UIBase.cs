@@ -33,6 +33,11 @@ public class UIBase : MonoBehaviour
     {
         return transform.Find(name).GetComponent<Text>();
     }
+    
+    protected Toggle GetToggle(string name)
+    {
+        return transform.Find(name).GetComponent<Toggle>();
+    }
 
     protected string GetInputText(string name)
     {

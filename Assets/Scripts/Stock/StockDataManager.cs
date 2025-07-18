@@ -13,8 +13,10 @@ public class StockDataManager : MonoBehaviour
     public static StockDataManager Instance;
 
     private Dictionary<string, string> CodeName = new Dictionary<string, string>();
-    private Dictionary<int, StockData> StockDatas = new Dictionary<int, StockData>();
+    public Dictionary<int, StockData> StockDatas = new Dictionary<int, StockData>();
     public Dictionary<string, double> CurUnits = new Dictionary<string, double>();
+
+    public Dictionary<string, StockData> HoldStockDatas = new Dictionary<string, StockData>();
 
     public int Index = 0;
 
@@ -172,6 +174,63 @@ public class StockDataManager : MonoBehaviour
         return stockDatas;
     }
 
+    public void CalcHoldStockDatas()
+    {
+        HoldStockDatas.Clear();
+        
+        foreach (var kv in StockDatas)
+        {
+            if (kv.Value.SellType == SellType.Hold && !HoldStockDatas.TryAdd(kv.Value.Code, kv.Value))
+            {
+                var oldData = HoldStockDatas[kv.Value.Code];
+                StockData stockData = new StockData()
+                {
+                    Type = oldData.Type,
+                    Code = oldData.Code,
+                    Name = oldData.Name,
+                    Num = oldData.Num + kv.Value.Num,
+                    Unit = (oldData.Unit * oldData.Num + kv.Value.Unit * kv.Value.Num) / (oldData.Num + kv.Value.Num),
+                    Profit = 0,
+                    BuyDate = oldData.BuyDate > kv.Value.BuyDate ? kv.Value.BuyDate : oldData.BuyDate,
+                    SellDate = oldData.SellDate,
+                };
+                stockData.Init();
+                HoldStockDatas[kv.Value.Code] = stockData;
+            }
+        }
+    }
+    
+    public List<StockData> GetHoldStockDatas(StockType stockType = StockType.All, SellType sellType = SellType.All)
+    {
+        List<StockData> stockDatas = new List<StockData>();
+
+        foreach (var kv in HoldStockDatas)
+        {
+            if (stockType != StockType.All && kv.Value.Type != stockType)
+            {
+                if (stockType == StockType.A && (kv.Value.Type == StockType.Short || kv.Value.Type == StockType.Mid || kv.Value.Type == StockType.Long))
+                {
+                    
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            
+            if (sellType != SellType.All && kv.Value.SellType != sellType)
+            {
+                continue;
+            }
+
+            stockDatas.Add(kv.Value);
+        }
+        
+        stockDatas.Sort((a, b) => a.Sum.CompareTo(b.Sum));
+
+        return stockDatas;
+    }
+
     IEnumerator UpdateStockPrice()
     {
         yield return new WaitForSeconds(2.5f);
@@ -252,7 +311,7 @@ public class StockDataManager : MonoBehaviour
                 string result = (string)data["response"];
                 var ss = result.Split(',');
                 
-                Debug.Log($"{stockData.Name} 更新当前价格: ${ss[1]}");
+                Debug.Log($"<{stockData.Name}>当前价格: {ss[1]}");
 
                 if (string.IsNullOrEmpty(stockData.Name))
                 {
