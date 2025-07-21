@@ -2,11 +2,13 @@ using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
 using System.Text.RegularExpressions;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using UnityEditor.Experimental.GraphView;
 
 public class StockDataManager : MonoBehaviour
 {
@@ -15,9 +17,6 @@ public class StockDataManager : MonoBehaviour
     private Dictionary<string, string> CodeName = new Dictionary<string, string>();
     public Dictionary<int, StockData> StockDatas = new Dictionary<int, StockData>();
     public Dictionary<string, double> CurUnits = new Dictionary<string, double>();
-
-    public Dictionary<string, StockData> HoldStockDatas = new Dictionary<string, StockData>();
-    public Dictionary<string, StockData> SoldStockDatas = new Dictionary<string, StockData>();
 
     public int Index = 0;
 
@@ -191,118 +190,152 @@ public class StockDataManager : MonoBehaviour
         return stockDatas;
     }
 
-    public void CalcHoldStockDatas()
+    public List<StockData> CalcStockDatas(List<StockData> stockDatas, MergeType mergeType)
     {
-        HoldStockDatas.Clear();
-        
-        foreach (var kv in StockDatas)
+        if (mergeType == MergeType.No)
         {
-            if (kv.Value.SellType == SellType.Hold && !HoldStockDatas.TryAdd(kv.Value.Code, kv.Value))
+            return stockDatas;
+        }
+        
+        Dictionary<string, StockData> holdStockDatas = new Dictionary<string, StockData>();
+        Dictionary<string, StockData> soldStockDatas = new Dictionary<string, StockData>();
+        Dictionary<string, StockData> allStockDatas = new Dictionary<string, StockData>();
+        List<StockData> newStockDatas = new List<StockData>();
+
+        if (mergeType == MergeType.All)
+        {
+            foreach (var stockData in stockDatas)
             {
-                var oldData = HoldStockDatas[kv.Value.Code];
-                StockData stockData = new StockData()
+                if (allStockDatas.TryAdd(stockData.Code, stockData))
+                {
+                    continue;
+                }
+
+                var oldData = allStockDatas[stockData.Code];
+
+                DateTime buyDate;
+                DateTime sellDate;
+
+                if (oldData.SellType == stockData.SellType)
+                {
+                    buyDate = oldData.BuyDate > stockData.BuyDate ? stockData.BuyDate : oldData.BuyDate;
+                    sellDate = oldData.SellDate > stockData.SellDate ? oldData.SellDate : stockData.SellDate;
+                }
+                else
+                {
+                    buyDate = oldData.BuyDate > stockData.BuyDate ? stockData.BuyDate : oldData.BuyDate;
+                    sellDate = DateTime.MinValue;
+                }
+
+                StockData newData = new StockData()
                 {
                     Type = oldData.Type,
                     Code = oldData.Code,
                     Name = oldData.Name,
-                    Num = oldData.Num + kv.Value.Num,
-                    Unit = (oldData.Unit * oldData.Num + kv.Value.Unit * kv.Value.Num) / (oldData.Num + kv.Value.Num),
-                    Profit = 0,
-                    BuyDate = oldData.BuyDate > kv.Value.BuyDate ? kv.Value.BuyDate : oldData.BuyDate,
-                    SellDate = oldData.SellDate,
+                    Num = oldData.Num + stockData.Num,
+                    Unit = (oldData.Sum + stockData.Sum) / (oldData.Num + stockData.Num),
+                    Profit = oldData.Profit + stockData.Profit,
+                    BuyDate = buyDate,
+                    SellDate = sellDate,
                 };
-                stockData.Init();
-                HoldStockDatas[kv.Value.Code] = stockData;
-            }
-        }
-    }
-    
-    public void CalcSoldStockDatas()
-    {
-        SoldStockDatas.Clear();
-        
-        foreach (var kv in StockDatas)
-        {
-            if (kv.Value.SellType == SellType.Sold && !SoldStockDatas.TryAdd(kv.Value.Code, kv.Value))
-            {
-                var oldData = SoldStockDatas[kv.Value.Code];
-                StockData stockData = new StockData()
-                {
-                    Type = oldData.Type,
-                    Code = oldData.Code,
-                    Name = oldData.Name,
-                    Num = oldData.Num + kv.Value.Num,
-                    Unit = (oldData.Unit * oldData.Num + kv.Value.Unit * kv.Value.Num) / (oldData.Num + kv.Value.Num),
-                    Profit = oldData.Profit + kv.Value.Profit,
-                    BuyDate = oldData.BuyDate > kv.Value.BuyDate ? kv.Value.BuyDate : oldData.BuyDate,
-                    SellDate = oldData.SellDate > kv.Value.SellDate ? oldData.SellDate : kv.Value.SellDate,
-                };
-                stockData.Init();
-                SoldStockDatas[kv.Value.Code] = stockData;
-            }
-        }
-    }
-    
-    public List<StockData> GetSoldStockDatas(StockType stockType = StockType.All, SellType sellType = SellType.All)
-    {
-        List<StockData> stockDatas = new List<StockData>();
 
-        foreach (var kv in SoldStockDatas)
+                newData.Init();
+
+                allStockDatas[stockData.Code] = newData;
+            }
+        }
+        else
         {
-            if (stockType != StockType.All && kv.Value.Type != stockType)
+            if (mergeType == MergeType.Hold || mergeType == MergeType.Mix)
             {
-                if (stockType == StockType.A && (kv.Value.Type == StockType.Short || kv.Value.Type == StockType.Mid || kv.Value.Type == StockType.Long))
+                foreach (var stockData in stockDatas)
                 {
+                    if (stockData.SellType != SellType.Hold)
+                    {
+                        newStockDatas.Add(stockData);
+                        continue;
+                    }
                     
-                }
-                else
-                {
-                    continue;
+                    if (holdStockDatas.TryAdd(stockData.Code, stockData))
+                    {
+                        continue;
+                    }
+                    
+                    var oldData = holdStockDatas[stockData.Code];
+                
+                    StockData newData = new StockData()
+                    {
+                        Type = oldData.Type,
+                        Code = oldData.Code,
+                        Name = oldData.Name,
+                        Num = oldData.Num + stockData.Num,
+                        Unit = (oldData.Sum + stockData.Sum) / (oldData.Num + stockData.Num),
+                        Profit = oldData.Profit + stockData.Profit,
+                        BuyDate = oldData.BuyDate > stockData.BuyDate ? stockData.BuyDate : oldData.BuyDate,
+                        SellDate = oldData.SellDate,
+                    };
+                
+                    newData.Init();
+                
+                    holdStockDatas[stockData.Code] = newData;
                 }
             }
             
-            if (sellType != SellType.All && kv.Value.SellType != sellType)
+            if (newStockDatas.Count > 0)
             {
-                continue;
+                stockDatas = newStockDatas;
             }
-
-            stockDatas.Add(kv.Value);
-        }
-        
-        stockDatas.Sort((a, b) => a.Profit.CompareTo(b.Profit));
-
-        return stockDatas;
-    }
-    
-    public List<StockData> GetHoldStockDatas(StockType stockType = StockType.All, SellType sellType = SellType.All)
-    {
-        List<StockData> stockDatas = new List<StockData>();
-
-        foreach (var kv in HoldStockDatas)
-        {
-            if (stockType != StockType.All && kv.Value.Type != stockType)
+            
+            if (mergeType == MergeType.Sold || mergeType == MergeType.Mix)
             {
-                if (stockType == StockType.A && (kv.Value.Type == StockType.Short || kv.Value.Type == StockType.Mid || kv.Value.Type == StockType.Long))
+                foreach (var stockData in stockDatas)
                 {
+                    if (stockData.SellType != SellType.Sold)
+                    {
+                        if (mergeType != MergeType.Mix)
+                        {
+                            newStockDatas.Add(stockData);
+                        }
+                        
+                        continue;
+                    }
                     
-                }
-                else
-                {
-                    continue;
+                    if (soldStockDatas.TryAdd(stockData.Code, stockData))
+                    {
+                        continue;
+                    }
+                    
+                    var oldData = soldStockDatas[stockData.Code];
+                
+                    StockData newData = new StockData()
+                    {
+                        Type = oldData.Type,
+                        Code = oldData.Code,
+                        Name = oldData.Name,
+                        Num = oldData.Num + stockData.Num,
+                        Unit = (oldData.Sum + stockData.Sum) / (oldData.Num + stockData.Num),
+                        Profit = oldData.Profit + stockData.Profit,
+                        BuyDate = oldData.BuyDate > stockData.BuyDate ? stockData.BuyDate : oldData.BuyDate,
+                        SellDate = oldData.SellDate > stockData.SellDate ? oldData.SellDate : stockData.SellDate,
+                    };
+                
+                    newData.Init();
+                
+                    soldStockDatas[stockData.Code] = newData;
                 }
             }
             
-            if (sellType != SellType.All && kv.Value.SellType != sellType)
+            if (newStockDatas.Count > 0 && mergeType == MergeType.Mix)
             {
-                continue;
+                newStockDatas.Clear();
             }
-
-            stockDatas.Add(kv.Value);
         }
-        
-        stockDatas.Sort((a, b) => a.Sum.CompareTo(b.Sum));
 
-        return stockDatas;
+        newStockDatas.AddRange(holdStockDatas.Values.ToList());
+        newStockDatas.AddRange(soldStockDatas.Values.ToList());
+        newStockDatas.AddRange(allStockDatas.Values.ToList());
+        
+        return newStockDatas;
     }
 
     IEnumerator UpdateStockPrice()
@@ -392,6 +425,7 @@ public class StockDataManager : MonoBehaviour
                     stockData.Name = ss[0];
                     AddCodeName(stockData.Code, stockData.Name);
                     SaveCodeName();
+                    SaveAll();
                 }
                 
                 CurUnits.TryAdd(stockData.Code, double.Parse(ss[1]));

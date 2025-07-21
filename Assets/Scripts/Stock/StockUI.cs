@@ -16,6 +16,7 @@ public class StockUI : UIBase
     private StockData curStockData;
 
     public StockType CurStockType;
+    public bool ShowExchange = false;
 
     private void Awake()
     {
@@ -27,6 +28,15 @@ public class StockUI : UIBase
         AddListener("btn_save", () =>
         {
             var code = GetInputText("code");
+
+            if (string.IsNullOrEmpty(code) 
+                || (StockType)GetDropdownId("type") == StockType.All 
+                || GetInputDouble("unit") == 0 
+                || GetInputInt("num") == 0)
+            {
+                return;
+            }
+            
             var name = StockDataManager.Instance.GetCodeName(code);
 
             if (string.IsNullOrEmpty(name))
@@ -69,8 +79,6 @@ public class StockUI : UIBase
             
                 StockDataManager.Instance.AddStockData(data, true);
             }
-            
-            RefreshList();
 
             GetInput("code").text = "";
             GetInput("name").text = "";
@@ -79,6 +87,8 @@ public class StockUI : UIBase
             GetInput("profit").text = "";
             GetInput("buy").text = "";
             GetInput("sell").text = "";
+            
+            RefreshList();
         });
         
         AddListener("btn_show", RefreshList);
@@ -93,49 +103,57 @@ public class StockUI : UIBase
     {
         var stockType = (StockType)GetDropdownId("stocktype");
         var sellType = (SellType)GetDropdownId("selltype");
+        var mergeType = (MergeType)GetDropdownId("mergetype");
 
         CurStockType = stockType;
+        ShowExchange = GetToggle("exchange").isOn || CurStockType == StockType.All;
+
+        List<StockData> stockDatas = StockDataManager.Instance.GetStockDatas(stockType, sellType);
         
-        bool merge = GetToggle("merge").isOn;
+        var code = GetInputText("code");
 
-        List<StockData> stockDatas;
+        if (!string.IsNullOrEmpty(code))
+        {
+            stockDatas.RemoveAll(x => !x.Code.Equals(code));
+        }
 
-        if (merge)
-        {
-            if (sellType == SellType.Hold)
-            {
-                StockDataManager.Instance.CalcHoldStockDatas();
-                stockDatas = StockDataManager.Instance.GetHoldStockDatas(stockType, sellType);
-            }
-            else if (sellType == SellType.Sold)
-            {
-                StockDataManager.Instance.CalcSoldStockDatas();
-                stockDatas = StockDataManager.Instance.GetSoldStockDatas(stockType, sellType);
-            }
-            else
-            {
-                stockDatas = StockDataManager.Instance.GetStockDatas(stockType, sellType);
-            }
-        }
-        else
-        {
-            stockDatas = StockDataManager.Instance.GetStockDatas(stockType, sellType);
-        }
+        stockDatas = StockDataManager.Instance.CalcStockDatas(stockDatas, mergeType);
 
         if (GetToggle("dsum").isOn)
         {
-            stockDatas.Sort((a, b) => a.Sum.CompareTo(b.Sum));
+            if (ShowExchange)
+            {
+                stockDatas.Sort((a, b) => a.ExchangeSum.CompareTo(b.ExchangeSum));
+            }
+            else
+            {
+                stockDatas.Sort((a, b) => a.Sum.CompareTo(b.Sum));
+            }
         }
         
         if (GetToggle("dprofit").isOn)
         {
-            if (sellType == SellType.Hold)
+            if (ShowExchange)
             {
-                stockDatas.Sort((a, b) => a.FloatingProfit.CompareTo(b.FloatingProfit));
+                if (sellType == SellType.Hold)
+                {
+                    stockDatas.Sort((a, b) => a.ExchangeFloatingProfit.CompareTo(b.ExchangeFloatingProfit));
+                }
+                else
+                {
+                    stockDatas.Sort((a, b) => a.ExchangeProfit.CompareTo(b.ExchangeProfit));
+                }
             }
             else
             {
-                stockDatas.Sort((a, b) => a.Profit.CompareTo(b.Profit));
+                if (sellType == SellType.Hold)
+                {
+                    stockDatas.Sort((a, b) => a.FloatingProfit.CompareTo(b.FloatingProfit));
+                }
+                else
+                {
+                    stockDatas.Sort((a, b) => a.Profit.CompareTo(b.Profit));
+                }
             }
         }
         
@@ -163,7 +181,19 @@ public class StockUI : UIBase
         
         if (GetToggle("dfsum").isOn && sellType == SellType.Hold)
         {
-            stockDatas.Sort((a, b) => (a.Sum + a.FloatingProfit).CompareTo(b.Sum + b.FloatingProfit));
+            if (ShowExchange)
+            {
+                stockDatas.Sort((a, b) => a.ExchangeFloatingSum.CompareTo(b.ExchangeFloatingSum));
+            }
+            else
+            {
+                stockDatas.Sort((a, b) => a.FloatingSum.CompareTo(b.FloatingSum));
+            }
+        }
+        
+        if (GetToggle("dday").isOn)
+        {
+            stockDatas.Sort((a, b) => a.HoldDays.CompareTo(b.HoldDays));
         }
         
         if (!GetToggle("dir").isOn)
@@ -174,8 +204,6 @@ public class StockUI : UIBase
         double totalSum = 0;
         double historyProfit = 0;
         double totalFloatingProfit = 0;
-
-        double exchange = 1;
         
         for (int i = 0; i < stockDatas.Count; i++)
         {
@@ -188,30 +216,33 @@ public class StockUI : UIBase
             {
                 var item = Instantiate(Item, Item.transform.parent).GetComponent<StockItem>();
                 item.Init(stockDatas[i]);
+                item.gameObject.SetActive(true);
                 items.Add(item);
             }
 
-            if (stockType == StockType.All && stockDatas[i].Type == StockType.US)
+            if (ShowExchange)
             {
-                exchange = StockDataManager.Instance.US_Exchange;
-            }
-            else if (stockType == StockType.All && stockDatas[i].Type == StockType.HK)
-            {
-                exchange = StockDataManager.Instance.HK_Exchange;
-            }
-            else
-            {
-                exchange = 1;
-            }
-
-            if (stockDatas[i].SellType != SellType.Sold)
-            {
-                totalSum += stockDatas[i].Sum * exchange;
-                totalFloatingProfit += stockDatas[i].FloatingProfit * exchange;
+                if (stockDatas[i].SellType != SellType.Sold)
+                {
+                    totalSum += stockDatas[i].ExchangeSum;
+                    totalFloatingProfit += stockDatas[i].ExchangeFloatingProfit;
+                }
+                else
+                {
+                    historyProfit += stockDatas[i].ExchangeProfit;
+                }
             }
             else
             {
-                historyProfit += stockDatas[i].Profit * exchange;
+                if (stockDatas[i].SellType != SellType.Sold)
+                {
+                    totalSum += stockDatas[i].Sum;
+                    totalFloatingProfit += stockDatas[i].FloatingProfit;
+                }
+                else
+                {
+                    historyProfit += stockDatas[i].Profit;
+                }
             }
         }
 
@@ -222,11 +253,11 @@ public class StockUI : UIBase
 
         if (sellType == SellType.Sold)
         {
-            GetText("msg").text = $"历史盈亏：{historyProfit.ToString("f2")}";
+            GetText("msg").text = $"历史盈亏：{historyProfit.ToPrice()}";
         }
         else
         {
-            GetText("msg").text = $"总仓位：{totalSum.ToString("f2")}    浮盈：{totalFloatingProfit.ToString("f2")}    浮盈率：{(totalFloatingProfit / totalSum * 100).ToString("f2")}%\n总盈利：{historyProfit.ToString("f2")}    总盈利（浮动）：{(totalFloatingProfit + historyProfit).ToString("f2")}";
+            GetText("msg").text = $"总仓位：{totalSum.ToPrice()}    浮盈：{totalFloatingProfit.ToPrice()}    浮盈率：{(totalFloatingProfit / totalSum).ToPercent()}\n总盈利：{historyProfit.ToPrice()}    总盈利（浮动）：{(totalFloatingProfit + historyProfit).ToPrice()}";
         }
     }
 
@@ -238,8 +269,8 @@ public class StockUI : UIBase
         GetInput("code").text = stockData.Code;
         GetInput("name").text = stockData.Name;
         GetInput("num").text = stockData.Num.ToString();
-        GetInput("unit").text = stockData.Unit.ToString("f4");
-        GetInput("profit").text = stockData.Profit.ToString("f2");
+        GetInput("unit").text = stockData.Unit.ToUnit();
+        GetInput("profit").text = stockData.Profit.ToPrice();
         GetInput("buy").text = stockData.BuyDate.ToShortDateString();
         GetInput("sell").text = stockData.SellDate.ToShortDateString();
     }

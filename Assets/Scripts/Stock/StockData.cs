@@ -22,6 +22,15 @@ public enum SellType
     Sold,
 }
 
+public enum MergeType
+{
+    No = 0,
+    Hold,
+    Sold,
+    Mix,
+    All,
+}
+
 public class StockData
 {
     //股票分类
@@ -69,6 +78,8 @@ public class StockData
     public double ExchangeProfit;
     //人民币浮动收益
     public double ExchangeFloatingProfit;
+    //持有天数
+    public int HoldDays;
 
     public StockData()
     {
@@ -103,7 +114,7 @@ public class StockData
         Sum = Unit * Num;
         Rate = Profit / Sum;
 
-        if (StockDataManager.Instance.CurUnits.TryGetValue(Code, out double d))
+        if (StockDataManager.Instance.CurUnits.TryGetValue(Code, out double d) && SellType == SellType.Hold)
         {
             CurUnit = d;
         }
@@ -131,6 +142,8 @@ public class StockData
         ExchangeProfit = exchange * Profit;
         ExchangeFloatingSum = exchange * FloatingSum;
         ExchangeFloatingProfit = exchange * FloatingProfit;
+
+        HoldDays = SellDate >= BuyDate ? (SellDate - BuyDate).Days : (DateTime.Now - BuyDate).Days;
     }
     
     public override string ToString()

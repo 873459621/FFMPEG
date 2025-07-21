@@ -23,49 +23,43 @@ public class StockItem : UIBase
 
     public void Init(StockData stockData)
     {
-        double exchange = 1;
-        
-        if (StockUI.Instance.CurStockType == StockType.All && stockData.Type == StockType.US)
-        {
-            exchange = StockDataManager.Instance.US_Exchange;
-        }
-        else if (StockUI.Instance.CurStockType == StockType.All && stockData.Type == StockType.HK)
-        {
-            exchange = StockDataManager.Instance.HK_Exchange;
-        }
-        else
-        {
-            exchange = 1;
-        }
-        
         this.stockData = stockData;
+
+        bool showExchange = StockUI.Instance.ShowExchange;
+
+        Color color = (stockData.Profit > 0 || this.stockData.FloatingRate > 0) ? new Color(1, 0.2f, 0.2f) : Color.green;
+        
         GetText("code").text = stockData.Code;
         GetText("name").text = stockData.Name;
-        GetText("sum").text = (stockData.Sum * exchange).ToString("f2");
+        GetText("sum").text = (showExchange ? stockData.ExchangeSum : stockData.Sum).ToPrice();
         GetText("num").text = stockData.Num.ToString();
-        GetText("unit").text = stockData.Unit.ToString("f4");
+        GetText("unit").text = stockData.Unit.ToUnit();
         GetText("buy").text = stockData.BuyDate.ToShortDateString();
-        GetButton("btn_apply").gameObject.SetActive(true);
+        GetButton("btn_apply").gameObject.SetActive(StockDataManager.Instance.StockDatas.ContainsKey(stockData.Id));
+        GetText("day").text = stockData.HoldDays.ToString();
+
+        GetText("profit").color = color;
+        GetText("rate").color = color;
+        // GetText("fsum").color = color;
+        // GetText("funit").color = color;
 
         if (stockData.SellType == SellType.Sold)
         {
-            GetText("profit").text = (stockData.Profit * exchange).ToString("f2");
-            GetText("rate").text = (stockData.Rate * 100).ToString("f2") + "%";
+            GetText("profit").text = (showExchange ? stockData.ExchangeProfit : stockData.Profit).ToPrice();
+            GetText("rate").text = stockData.Rate.ToPercent();
             GetButton("btn_sell").gameObject.SetActive(false);
             GetText("sell").text = stockData.SellDate.ToShortDateString();
             GetText("fsum").text = "";
             GetText("funit").text = "";
-            GetText("day").text = (stockData.SellDate - stockData.BuyDate).Days.ToString();
         }
         else
         {
-            GetText("profit").text = (stockData.FloatingProfit * exchange).ToString("f2");
-            GetText("rate").text = (stockData.FloatingRate * 100).ToString("f2") + "%";
-            GetButton("btn_sell").gameObject.SetActive(true);
+            GetText("profit").text = (showExchange ? stockData.ExchangeFloatingProfit : stockData.FloatingProfit).ToPrice();
+            GetText("rate").text = stockData.FloatingRate.ToPercent();
+            GetButton("btn_sell").gameObject.SetActive(StockDataManager.Instance.StockDatas.ContainsKey(stockData.Id));
             GetText("sell").text = "";
-            GetText("fsum").text = ((stockData.Sum + stockData.FloatingProfit) * exchange).ToString("f2");
-            GetText("funit").text = stockData.CurUnit.ToString("f4");
-            GetText("day").text = (DateTime.Now - stockData.BuyDate).Days.ToString();
+            GetText("fsum").text = (showExchange ? stockData.ExchangeFloatingSum : stockData.FloatingSum).ToPrice();
+            GetText("funit").text = stockData.CurUnit.ToUnit();
         }
     }
 }
