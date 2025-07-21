@@ -92,11 +92,27 @@ public class StockUI : UIBase
         });
         
         AddListener("btn_show", RefreshList);
+        
+        GetDropdown("type").value = (int)StockType.Short;
 
         GetDropdown("stocktype").value = (int)StockType.All;
         GetDropdown("selltype").value = (int)SellType.Hold;
         
         RefreshList();
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            RefreshList();
+        }
+        
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            GetDropdown("stocktype").value = (GetDropdownId("stocktype") + 1) % ((int)StockType.A + 1);
+            RefreshList();
+        }
     }
 
     public void RefreshList()
