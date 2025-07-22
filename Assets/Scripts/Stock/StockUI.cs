@@ -108,6 +108,22 @@ public class StockUI : UIBase
             RefreshList();
         }
         
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            curStockData = null;
+
+            GetDropdown("type").value = (int)StockType.Short;
+            GetInput("code").text = "";
+            GetInput("name").text = "";
+            GetInput("num").text = "";
+            GetInput("unit").text = "";
+            GetInput("profit").text = "";
+            GetInput("buy").text = "";
+            GetInput("sell").text = "";
+            
+            RefreshList();
+        }
+        
         if (Input.GetKeyDown(KeyCode.Tab))
         {
             GetDropdown("stocktype").value = (GetDropdownId("stocktype") + 1) % ((int)StockType.A + 1);
@@ -294,18 +310,56 @@ public class StockUI : UIBase
     public void Sell(StockData stockData)
     {
         double d = GetInputDouble("profit");
+        int num = GetInputInt("num");
+        double unit = GetInputDouble("unit");
 
-        if (d == 0 || !StockDataManager.Instance.StockDatas.ContainsKey(stockData.Id))
+        var sellData = GetInputDate("sell");
+
+        if (!StockDataManager.Instance.StockDatas.ContainsKey(stockData.Id))
         {
             return;
         }
+
+        if (d != 0)
+        {
+            stockData.SellDate = sellData;
+            stockData.Profit = d;
+            stockData.Calc();
         
-        stockData.SellDate = DateTime.Now;
-        stockData.Profit = d;
-        stockData.Calc();
+            StockDataManager.Instance.SaveAll();
         
-        StockDataManager.Instance.SaveAll();
+            RefreshList();
+        }
+        else if (num != 0 && unit != 0 && num < stockData.Num)
+        {
+            var newData = new StockData()
+            {
+                Type = stockData.Type,
+                Code = stockData.Code,
+                Name = stockData.Name,
+                Num = stockData.Num - num,
+                Unit = stockData.Unit,
+                Profit = stockData.Profit,
+                BuyDate = stockData.BuyDate,
+                SellDate = stockData.SellDate,
+            };
+            
+            newData.Init();
+            StockDataManager.Instance.AddStockData(newData);
+            
+            stockData.SellDate = sellData;
+            stockData.Num = num;
+            stockData.Profit = (unit - stockData.Unit) * num;
+            stockData.Calc();
         
-        RefreshList();
+            StockDataManager.Instance.SaveAll();
+        
+            RefreshList();
+        }
+
+        GetInput("profit").text = "";
+        GetInput("num").text = "";
+        GetInput("unit").text = "";
+        GetInput("sell").text = "";
     }
 }

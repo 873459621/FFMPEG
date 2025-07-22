@@ -46,7 +46,8 @@ public class UIBase : MonoBehaviour
     
     protected int GetInputInt(string name)
     {
-        return int.Parse(GetInput(name).text);
+        int.TryParse(GetInput(name).text, out int i);
+        return i;
     }
     
     protected double GetInputDouble(string name)
