@@ -149,6 +149,28 @@ public class StockUI : UIBase
             stockDatas.RemoveAll(x => !x.Code.Equals(code));
         }
 
+        var recent = GetInputInt("recent");
+
+        if (recent > 0)
+        {
+            stockDatas.RemoveAll(x => x.SellType == SellType.Sold && (DateTime.Now - x.BuyDate).Days > recent);
+        }
+
+        if (GetToggle("filter").isOn)
+        {
+            Dictionary<string, int> codeCache = new Dictionary<string, int>();
+
+            foreach (var stockData in stockDatas)
+            {
+                if (stockData.SellType == SellType.Hold)
+                {
+                    codeCache.TryAdd(stockData.Code, 1);
+                }
+            }
+            
+            stockDatas.RemoveAll(x => x.SellType == SellType.Sold && !codeCache.ContainsKey(x.Code));
+        }
+
         stockDatas = StockDataManager.Instance.CalcStockDatas(stockDatas, mergeType);
 
         if (GetToggle("dsum").isOn)
