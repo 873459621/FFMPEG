@@ -65,13 +65,24 @@ public class StockDataManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+    }
+
+    private void Start()
+    {
+        StartCoroutine(Init());
+    }
+
+    IEnumerator Init()
+    {
+        yield return ExchangeRateFetcher.Instance.ExchangeRateFetch();
+        
         LoadCodeName();
         LoadAll();
         
         Debug.Log($"当前美元汇率：{US_Exchange}");
         Debug.Log($"当前港元汇率：{HK_Exchange}");
 
-        StartCoroutine(UpdateStockPrice());
+        yield return UpdateStockPrice();
     }
 
     public void LoadAll()
@@ -340,8 +351,6 @@ public class StockDataManager : MonoBehaviour
 
     IEnumerator UpdateStockPrice()
     {
-        yield return new WaitForSeconds(2.5f);
-        
         foreach (var kv in StockDatas)
         {
             if (kv.Value.SellType == SellType.Sold)
@@ -372,7 +381,7 @@ public class StockDataManager : MonoBehaviour
             var date = new DateTime(long.Parse(ss[1]));
             var now = DateTime.Now;
 
-            if (date.ToShortDateString().Equals(now.ToShortDateString()) && date.Hour == now.Hour)
+            if (date.ToShortDateString().Equals(now.ToShortDateString()) && (date.Hour == now.Hour || date.Hour >= 16))
             {
                 CurUnits.TryAdd(stockData.Code, double.Parse(ss[0]));
                 stockData.Calc();

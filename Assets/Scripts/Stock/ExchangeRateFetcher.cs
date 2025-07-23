@@ -11,7 +11,14 @@ public class ExchangeRateFetcher : MonoBehaviour
     private string apiURL = "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=USD&to_currency=CNH&apikey=IWVNVTWTNUIGGC7Y";
     private string apiURL2 = "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=HKD&to_currency=CNH&apikey=IWVNVTWTNUIGGC7Y";
 
-    void Start()
+    public static ExchangeRateFetcher Instance;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+    public IEnumerator ExchangeRateFetch()
     {
         var date = PlayerPrefs.GetString("ExchangeRateFetcher");
 
@@ -21,11 +28,11 @@ public class ExchangeRateFetcher : MonoBehaviour
         }
         else
         {
-            return;
+            yield break;
         }
 
-        StartCoroutine(GetExchangeRate(apiURL));
-        StartCoroutine(GetExchangeRate(apiURL2));
+        yield return GetExchangeRate(apiURL);
+        yield return GetExchangeRate(apiURL2);
     }
 
     IEnumerator GetExchangeRate(string url)
