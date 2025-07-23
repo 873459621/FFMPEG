@@ -314,6 +314,7 @@ public class StockUI : UIBase
         double unit = GetInputDouble("unit");
 
         var sellData = GetInputDate("sell");
+        sellData = sellData > stockData.BuyDate ? sellData : DateTime.Now;
 
         if (!StockDataManager.Instance.StockDatas.ContainsKey(stockData.Id))
         {
