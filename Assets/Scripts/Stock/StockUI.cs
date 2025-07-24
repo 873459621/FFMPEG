@@ -97,8 +97,6 @@ public class StockUI : UIBase
 
         GetDropdown("stocktype").value = (int)StockType.All;
         GetDropdown("selltype").value = (int)SellType.Hold;
-        
-        RefreshList();
     }
 
     private void Update()
