@@ -311,6 +311,55 @@ public class StockUI : UIBase
         {
             GetText("msg").text = $"总仓位：{totalSum.ToPrice()}    浮盈：{totalFloatingProfit.ToPrice()}    浮盈率：{(totalFloatingProfit / totalSum).ToPercent()}\n总盈利：{historyProfit.ToPrice()}    总盈利（浮动）：{(totalFloatingProfit + historyProfit).ToPrice()}";
         }
+        
+        var today = StockDataManager.Instance.Today.Find(x => x.Type == stockType);
+        var yesterday = StockDataManager.Instance.Yesterday?.Find(x => x.Type == stockType);
+        var lastMonth = StockDataManager.Instance.LastMonth?.Find(x => x.Type == stockType);
+        var lastYear = StockDataManager.Instance.LastYear?.Find(x => x.Type == stockType);
+
+        string history = "";
+        
+        if (yesterday != null)
+        {
+            if (sellType == SellType.Sold)
+            {
+                history += $"比昨天    盈利：{(today.Profit - yesterday.Profit).ToPrice()}";
+            }
+            else
+            {
+                history += $"比昨天    仓位：{(today.Sum - yesterday.Sum).ToPrice()}    浮盈：{(today.Profit + today.FloatingProfit - yesterday.Profit - yesterday.FloatingProfit).ToPrice()}";
+            }
+        }
+        
+        if (lastMonth != null)
+        {
+            history += "\n";
+            
+            if (sellType == SellType.Sold)
+            {
+                history += $"比上月    盈利：{(today.Profit - lastMonth.Profit).ToPrice()}";
+            }
+            else
+            {
+                history += $"比上月    仓位：{(today.Sum - lastMonth.Sum).ToPrice()}    浮盈：{(today.Profit + today.FloatingProfit - lastMonth.Profit - lastMonth.FloatingProfit).ToPrice()}";
+            }
+        }
+        
+        if (lastYear != null)
+        {
+            history += "\n";
+            
+            if (sellType == SellType.Sold)
+            {
+                history += $"比去年    盈利：{(today.Profit - lastYear.Profit).ToPrice()}";
+            }
+            else
+            {
+                history += $"比去年    仓位：{(today.Sum - lastYear.Sum).ToPrice()}    浮盈：{(today.Profit + today.FloatingProfit - lastYear.Profit - lastYear.FloatingProfit).ToPrice()}";
+            }
+        }
+
+        GetText("history").text = history;
     }
 
     public void ModifyData(StockData stockData)

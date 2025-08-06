@@ -8,6 +8,7 @@ using UnityEngine.Networking;
 using System.Text.RegularExpressions;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using Unity.Collections;
 using UnityEditor.Experimental.GraphView;
 
 public class StockDataManager : MonoBehaviour
@@ -15,8 +16,14 @@ public class StockDataManager : MonoBehaviour
     public static StockDataManager Instance;
 
     private Dictionary<string, string> CodeName = new Dictionary<string, string>();
+    private Dictionary<string, List<HistoryData>> HistoryDatas = new Dictionary<string, List<HistoryData>>();
     public Dictionary<int, StockData> StockDatas = new Dictionary<int, StockData>();
     public Dictionary<string, double> CurUnits = new Dictionary<string, double>();
+
+    public List<HistoryData> Today;
+    public List<HistoryData> Yesterday;
+    public List<HistoryData> LastMonth;
+    public List<HistoryData> LastYear;
 
     public int Index = 0;
 
@@ -78,6 +85,7 @@ public class StockDataManager : MonoBehaviour
         
         LoadCodeName();
         LoadAll();
+        LoadHistory();
         
         Debug.Log($"当前美元汇率：{US_Exchange}");
         Debug.Log($"当前港元汇率：{HK_Exchange}");
@@ -147,6 +155,249 @@ public class StockDataManager : MonoBehaviour
 
         sw.Close();
         sw.Dispose();
+    }
+    
+    public void LoadHistory()
+    {
+        var reader = File.OpenText("Assets/Resources/Stock/history.txt");
+
+        while (!reader.EndOfStream)
+        {
+            AddHistoryData(new HistoryData(reader.ReadLine().Trim()));
+        }
+
+        reader.Close();
+        reader.Dispose();
+    }
+    
+    public void SaveHistory()
+    {
+        StreamWriter sw = new FileInfo("Assets/Resources/Stock/history.txt").CreateText();
+
+        foreach (var kv in HistoryDatas)
+        {
+            foreach (var historyData in kv.Value)
+            {
+                if (historyData.Type != StockType.A && historyData.Type != StockType.All)
+                {
+                    sw.WriteLine(historyData);
+                }
+            }
+        }
+
+        sw.Close();
+        sw.Dispose();
+    }
+    
+    public void AddHistoryData(HistoryData historyData, bool isNew = false)
+    {
+        var key = historyData.Date.ToShortDateString();
+        
+        if (HistoryDatas.ContainsKey(key))
+        {
+            if (isNew)
+            {
+                HistoryDatas[key].RemoveAll(x => x.Type == historyData.Type);
+            }
+            
+            HistoryDatas[key].Add(historyData);
+        }
+        else
+        {
+            HistoryDatas.Add(key, new List<HistoryData> { historyData });
+        }
+    }
+
+    public void CalcHistory()
+    {
+        var now = DateTime.Now;
+        
+        Dictionary<StockType, List<StockData>> stockLists = new Dictionary<StockType, List<StockData>>();
+
+        foreach (var kv in StockDatas)
+        {
+            if (stockLists.ContainsKey(kv.Value.Type))
+            {
+                stockLists[kv.Value.Type].Add(kv.Value);
+            }
+            else
+            {
+                stockLists.Add(kv.Value.Type, new List<StockData> { kv.Value });
+            }
+        }
+
+        double aSum = 0;
+        double aProfit = 0;
+        double aFloatingProfit = 0;
+        
+        double allSum = 0;
+        double allProfit = 0;
+        double allFloatingProfit = 0;
+
+        foreach (var kv in stockLists)
+        {
+            double sum = 0;
+            double profit = 0;
+            double floatingProfit = 0;
+            
+            double exchangSum = 0;
+            double exchangeProfit = 0;
+            double exchangeFloatingProfit = 0;
+            
+            foreach (var stockData in kv.Value)
+            {
+                if (stockData.SellType == SellType.Hold)
+                {
+                    sum += stockData.Sum;
+                    exchangSum += stockData.ExchangeSum;
+                    floatingProfit += stockData.FloatingProfit;
+                    exchangeFloatingProfit += stockData.ExchangeFloatingProfit;
+                }
+                else
+                {
+                    profit += stockData.Profit;
+                    exchangeProfit += stockData.ExchangeProfit;
+                }
+            }
+
+            if (kv.Key == StockType.Short || kv.Key == StockType.Mid || kv.Key == StockType.Long)
+            {
+                aSum += sum;
+                aProfit += profit;
+                aFloatingProfit += floatingProfit;
+            }
+
+            allSum += exchangSum;
+            allProfit += exchangeProfit;
+            allFloatingProfit += exchangeFloatingProfit;
+            
+            AddHistoryData(new HistoryData
+            {
+                Type = kv.Key,
+                Date = now,
+                Sum = sum,
+                Profit = profit,
+                FloatingProfit = floatingProfit,
+            }, true);
+        }
+        
+        AddHistoryData(new HistoryData
+        {
+            Type = StockType.All,
+            Date = now,
+            Sum = allSum,
+            Profit = allProfit,
+            FloatingProfit = allFloatingProfit,
+        }, true);
+        
+        AddHistoryData(new HistoryData
+        {
+            Type = StockType.A,
+            Date = now,
+            Sum = aSum,
+            Profit = aProfit,
+            FloatingProfit = aFloatingProfit,
+        }, true);
+        
+        SaveHistory();
+
+        Today = HistoryDatas[now.ToShortDateString()];
+
+        string key = null;
+
+        for (int i = 1; i < 15; i++)
+        {
+            key = now.AddDays(-i).ToShortDateString();
+            
+            if (HistoryDatas.ContainsKey(key))
+            {
+                CalcHistoryDate(key);
+                Yesterday = HistoryDatas[key];
+                break;
+            }
+        }
+
+        var lastMonth = new DateTime(now.Year, now.Month, 1);
+        
+        for (int i = 1; i < 15; i++)
+        {
+            key = lastMonth.AddDays(-i).ToShortDateString();
+            
+            if (HistoryDatas.ContainsKey(key))
+            {
+                CalcHistoryDate(key);
+                LastMonth = HistoryDatas[key];
+                break;
+            }
+        }
+
+        var lastYear = new DateTime(now.Year, 1, 1);
+        
+        for (int i = 1; i < 15; i++)
+        {
+            key = lastYear.AddDays(-i).ToShortDateString();
+            
+            if (HistoryDatas.ContainsKey(key))
+            {
+                CalcHistoryDate(key);
+                LastYear = HistoryDatas[key];
+                break;
+            }
+        }
+    }
+
+    public void CalcHistoryDate(string key)
+    {
+        double aSum = 0;
+        double aProfit = 0;
+        double aFloatingProfit = 0;
+        
+        double allSum = 0;
+        double allProfit = 0;
+        double allFloatingProfit = 0;
+
+        foreach (var historyData in HistoryDatas[key])
+        {
+            if (historyData.Type == StockType.Short || historyData.Type == StockType.Mid || historyData.Type == StockType.Long)
+            {
+                aSum += historyData.Sum;
+                aProfit += historyData.Profit;
+                aFloatingProfit += historyData.FloatingProfit;
+            }
+            
+            double exchange = 1;
+        
+            if (historyData.Type == StockType.US)
+            {
+                exchange = US_Exchange;
+            }
+            else if (historyData.Type == StockType.HK)
+            {
+                exchange = HK_Exchange;
+            }
+
+            allSum += historyData.Sum * exchange;
+            allProfit += historyData.Profit * exchange;
+            allFloatingProfit += historyData.FloatingProfit * exchange;
+        }
+        
+        AddHistoryData(new HistoryData
+        {
+            Type = StockType.All,
+            Date = DateTime.Parse(key),
+            Sum = allSum,
+            Profit = allProfit,
+            FloatingProfit = allFloatingProfit,
+        }, true);
+        
+        AddHistoryData(new HistoryData
+        {
+            Type = StockType.A,
+            Date = DateTime.Parse(key),
+            Sum = aSum,
+            Profit = aProfit,
+            FloatingProfit = aFloatingProfit,
+        }, true);
     }
 
     public void AddStockData(StockData stockData, bool isNew = false)
@@ -367,6 +618,8 @@ public class StockDataManager : MonoBehaviour
                 yield return SendRequest(kv.Value);
             }
         }
+        
+        CalcHistory();
         
         StockUI.Instance.RefreshList();
     }
