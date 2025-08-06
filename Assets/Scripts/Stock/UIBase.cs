@@ -41,24 +41,24 @@ public class UIBase : MonoBehaviour
 
     protected string GetInputText(string name)
     {
-        return GetInput(name).text;
+        return GetInput(name).text.Trim();
     }
     
     protected int GetInputInt(string name)
     {
-        int.TryParse(GetInput(name).text, out int i);
+        int.TryParse(GetInputText(name), out int i);
         return i;
     }
     
     protected double GetInputDouble(string name)
     {
-        double.TryParse(GetInput(name).text, out double d);
+        double.TryParse(GetInputText(name), out double d);
         return d;
     }
     
     protected DateTime GetInputDate(string name, bool isBuy = false)
     {
-        var s = GetInput(name).text;
+        var s = GetInputText(name);
 
         if (string.IsNullOrEmpty(s))
         {
