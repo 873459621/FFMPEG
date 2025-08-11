@@ -5,11 +5,11 @@ def calculate_yearly_breakdown(title, pp, r, dd, verbose=False):
     ra = r # 生活费系数
     day = dd # 一年多少次
 
-    house = 1_000  # 房租
+    house = 2_000  # 房租
     water = 400 # 水电气网
-    food = 25 * 2.5 * 30 # 吃饭
-    traffic = 30 * 30 # 交通费
-    other = 2_000 # 杂费
+    food = 30 * 2.5 * 30 # 吃饭
+    traffic = 50 * 30 # 交通费
+    other = 4_000 # 杂费
 
     life = (house + water + food + traffic + other) * ra # 每月生活费
     C = per * day + life * 12  # 首年支出金额
@@ -59,11 +59,10 @@ def calculate_yearly_breakdown(title, pp, r, dd, verbose=False):
 
 
 # 执行计算并打印结果
-calculate_yearly_breakdown("屌丝", 400, 0.6, 180)
-calculate_yearly_breakdown("低端", 400, 0.8, 360)
-calculate_yearly_breakdown("中端", 600, 1.0, 360)
+calculate_yearly_breakdown("低端", 400, 1, 360)
+calculate_yearly_breakdown("中端", 600, 1.2, 360)
 calculate_yearly_breakdown("高端", 800, 1.4, 360)
-calculate_yearly_breakdown("超高", 1_000, 1.8, 360)
-calculate_yearly_breakdown("特高", 1_500, 2.2, 360)
-calculate_yearly_breakdown("终极", 2_000, 2.6, 360)
-calculate_yearly_breakdown("无敌", 3_000, 3.0, 360)
+calculate_yearly_breakdown("超高", 1_000, 1.6, 360)
+calculate_yearly_breakdown("特高", 1_500, 2.0, 360)
+calculate_yearly_breakdown("终极", 2_000, 2.5, 360)
+calculate_yearly_breakdown("无敌", 3_000, 3, 360)
