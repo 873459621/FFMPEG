@@ -18,6 +18,49 @@ def get_hk_realtime_quote(stock_code):
     # Extract the data portion from the response
     data_str = re.search(r'"(.*?)"', response.text).group(1)
 
+    print(data_str)
+    return data_str.split(',')
+
+def get_sh_realtime_quote(stock_code):
+    # Convert stock code to Sina's format (e.g., '00882.HK' -> 'hk00882')
+    symbol = f"sh{stock_code.split('.')[0]}"
+    url = f"http://hq.sinajs.cn/list={symbol}"
+    headers = {'Referer': 'http://finance.sina.com.cn'}  # Required for access
+    response = requests.get(url, headers=headers)
+    response.encoding = 'gbk'  # Decode with GBK
+
+    # Extract the data portion from the response
+    data_str = re.search(r'"(.*?)"', response.text).group(1)
+
+    print(data_str)
+    return data_str.split(',')
+
+def get_sz_realtime_quote(stock_code):
+    # Convert stock code to Sina's format (e.g., '00882.HK' -> 'hk00882')
+    symbol = f"sz{stock_code.split('.')[0]}"
+    url = f"http://hq.sinajs.cn/list={symbol}"
+    headers = {'Referer': 'http://finance.sina.com.cn'}  # Required for access
+    response = requests.get(url, headers=headers)
+    response.encoding = 'gbk'  # Decode with GBK
+
+    # Extract the data portion from the response
+    data_str = re.search(r'"(.*?)"', response.text).group(1)
+
+    print(data_str)
+    return data_str.split(',')
+
+def get_bj_realtime_quote(stock_code):
+    # Convert stock code to Sina's format (e.g., '00882.HK' -> 'hk00882')
+    symbol = f"bj{stock_code.split('.')[0]}"
+    url = f"http://hq.sinajs.cn/list={symbol}"
+    headers = {'Referer': 'http://finance.sina.com.cn'}  # Required for access
+    response = requests.get(url, headers=headers)
+    response.encoding = 'gbk'  # Decode with GBK
+
+    # Extract the data portion from the response
+    data_str = re.search(r'"(.*?)"', response.text).group(1)
+
+    print(data_str)
     return data_str.split(',')
 
 app = Flask(__name__)
@@ -30,6 +73,15 @@ def handle_unity():
     if data['code'].split('.')[1] == 'HK':
         df = get_hk_realtime_quote(data['code'])
         result = f"{df[1]},{df[6]}"
+    elif data['code'].split('.')[1] == 'SH':
+        df = get_sh_realtime_quote(data['code'])
+        result = f"{df[0]},{df[3]}"
+    elif data['code'].split('.')[1] == 'SZ':
+        df = get_sz_realtime_quote(data['code'])
+        result = f"{df[0]},{df[3]}"
+    elif data['code'].split('.')[1] == 'BJ':
+        df = get_bj_realtime_quote(data['code'])
+        result = f"{df[0]},{df[3]}"
     else:
         df = ts.realtime_quote(ts_code=data['code'])
         result = f"{df['NAME'].iloc[0]},{df['PRICE'].iloc[0]}"

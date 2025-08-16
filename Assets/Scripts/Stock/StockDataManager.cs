@@ -626,6 +626,8 @@ public class StockDataManager : MonoBehaviour
     
     IEnumerator SendRequest(StockData stockData)
     {
+        bool isEnd = DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Sunday;
+        
         var s = PlayerPrefs.GetString("CurUnit_" + stockData.Code);
 
         if (!string.IsNullOrEmpty(s))
@@ -635,6 +637,13 @@ public class StockDataManager : MonoBehaviour
             var now = DateTime.Now;
 
             if (date.ToShortDateString().Equals(now.ToShortDateString()) && (date.Hour == now.Hour || ((date.Hour >= 16 && stockData.Type == StockType.HK) || (date.Hour >= 15 && stockData.Type != StockType.HK))))
+            {
+                CurUnits.TryAdd(stockData.Code, double.Parse(ss[0]));
+                stockData.Calc();
+                yield break;
+            }
+
+            if (isEnd && date.ToShortDateString().Equals(now.ToShortDateString()))
             {
                 CurUnits.TryAdd(stockData.Code, double.Parse(ss[0]));
                 stockData.Calc();
