@@ -390,10 +390,19 @@ public class StockUI : UIBase
             return;
         }
 
-        if (d != 0)
+        if (d != 0 || (unit != 0 && num == 0))
         {
             stockData.SellDate = sellData;
-            stockData.Profit = d;
+
+            if (d != 0)
+            {
+                stockData.Profit = d;
+            }
+            else
+            {
+                stockData.Profit = (unit - stockData.Unit) * stockData.Num - stockData.Sum * 0.001;
+            }
+            
             stockData.Calc();
         
             StockDataManager.Instance.SaveAll();
@@ -419,7 +428,7 @@ public class StockUI : UIBase
             
             stockData.SellDate = sellData;
             stockData.Num = num;
-            stockData.Profit = (unit - stockData.Unit) * num;
+            stockData.Profit = (unit - 1.001 * stockData.Unit) * num;
             stockData.Calc();
         
             StockDataManager.Instance.SaveAll();
