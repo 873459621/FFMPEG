@@ -325,7 +325,11 @@ public class StockDataManager : MonoBehaviour
             
             if (HistoryDatas.ContainsKey(key))
             {
-                CalcHistoryDate(key);
+                if (HistoryDatas[key] != Yesterday)
+                {
+                    CalcHistoryDate(key);
+                }
+                
                 LastMonth = HistoryDatas[key];
                 break;
             }
@@ -339,7 +343,11 @@ public class StockDataManager : MonoBehaviour
             
             if (HistoryDatas.ContainsKey(key))
             {
-                CalcHistoryDate(key);
+                if (HistoryDatas[key] != Yesterday && HistoryDatas[key] != LastMonth)
+                {
+                    CalcHistoryDate(key);
+                }
+                
                 LastYear = HistoryDatas[key];
                 break;
             }
