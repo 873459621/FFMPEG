@@ -11,10 +11,12 @@ def calculate_yearly_breakdown(title, pp, r, dd, verbose=False):
     traffic = 50 * 30 # 交通费
     other = 100 * 30 # 杂费
 
+    ins = 1_000_000 # 保险
+
     life = (house + water + food + traffic + other) * ra # 每月生活费
     C = per * day + life * 12  # 首年支出金额
     g = 0.02  # 通货膨胀率
-    r = 0.1  # 投资回报率
+    r = 0.12  # 投资回报率
     n = 35  # 总年数
 
     # 计算初始本金（根据等比增长年金公式）
@@ -50,19 +52,20 @@ def calculate_yearly_breakdown(title, pp, r, dd, verbose=False):
                 f"{data['year']:<5}{data['begin_principal']:>15,.2f}{data['investment_return']:>15,.2f}{data['withdrawal']:>15,.2f}{data['end_principal']:>15,.2f}")
 
     print(f"\n{title}")
-    print(f"每月花费: {per * day / 12:,.2f}元（每次{per}元，{dd / 52:,.1f}次/周，{dd / 12:,.0f}次/月）")
-    print(f"生活费: {life:,.2f}元")
-    print(f"初始每年花费: {C:,.2f}元")
-    print(f"初始本金需求: {initial_principal:,.2f}元")
+    print(f"月收入: {per * day / 12:,.2f}元（{per}元/日）")
+    print(f"月盈余: {life:,.2f}元")
+    print(f"年收入: {C:,.2f}元")
+    print(f"总金额: {C * (1 / (r - g) + 2) + ins:,.2f}元")
 
     return yearly_data
 
 
 # 执行计算并打印结果
-calculate_yearly_breakdown("低端", 400, 1, 360)
-calculate_yearly_breakdown("中端", 600, 1.2, 360)
-calculate_yearly_breakdown("高端", 800, 1.4, 360)
-calculate_yearly_breakdown("超高", 1_000, 1.6, 360)
-calculate_yearly_breakdown("特高", 1_500, 2.0, 360)
-calculate_yearly_breakdown("终极", 2_000, 2.5, 360)
-calculate_yearly_breakdown("无敌", 3_000, 3, 360)
+print(f"\n游戏计划")
+calculate_yearly_breakdown("保底目标", 400, 1, 360)
+calculate_yearly_breakdown("保本目标", 600, 1.2, 360)
+calculate_yearly_breakdown("基础目标", 800, 1.4, 360)
+calculate_yearly_breakdown("合格目标", 1_000, 1.6, 360)
+calculate_yearly_breakdown("期望目标", 1_500, 2.0, 360)
+calculate_yearly_breakdown("追求目标", 2_000, 2.5, 360)
+calculate_yearly_breakdown("梦想目标", 3_000, 3, 360)
