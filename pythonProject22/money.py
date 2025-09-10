@@ -5,11 +5,11 @@ def calculate_yearly_breakdown(title, pp, r, dd, verbose=False):
     ra = r # 生活费系数
     day = dd # 一年多少次
 
-    house = 2_000  # 房租
+    house = 100 * 30  # 房租
     water = 400 # 水电气网
-    food = 30 * 2.5 * 30 # 吃饭
+    food = 30 * 3 * 30 # 吃饭
     traffic = 50 * 30 # 交通费
-    other = 4_000 # 杂费
+    other = 100 * 30 # 杂费
 
     life = (house + water + food + traffic + other) * ra # 每月生活费
     C = per * day + life * 12  # 首年支出金额
