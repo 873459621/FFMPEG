@@ -381,7 +381,7 @@ public class StockUI : UIBase
         GetInput("name").text = stockData.Name;
         GetInput("num").text = stockData.Num.ToString();
         GetInput("unit").text = stockData.Unit.ToUnit();
-        GetInput("profit").text = stockData.Profit.ToPrice();
+        GetInput("profit").text = stockData.Profit.ToString();
         GetInput("buy").text = stockData.BuyDate.ToShortDateString();
         GetInput("sell").text = stockData.SellDate.ToShortDateString();
     }
