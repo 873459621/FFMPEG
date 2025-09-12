@@ -8,14 +8,13 @@ using UnityEngine.Networking;
 using System.Text.RegularExpressions;
 using System.Text;
 using Newtonsoft.Json.Linq;
-using Unity.Collections;
-using UnityEditor.Experimental.GraphView;
 
 public class StockDataManager : MonoBehaviour
 {
     public static StockDataManager Instance;
 
     private Dictionary<string, string> CodeName = new Dictionary<string, string>();
+    private Dictionary<string, GroupType> Group = new Dictionary<string, GroupType>();
     private Dictionary<string, List<HistoryData>> HistoryDatas = new Dictionary<string, List<HistoryData>>();
     public Dictionary<int, StockData> StockDatas = new Dictionary<int, StockData>();
     public Dictionary<string, double> CurUnits = new Dictionary<string, double>();
@@ -84,6 +83,7 @@ public class StockDataManager : MonoBehaviour
         yield return ExchangeRateFetcher.Instance.ExchangeRateFetch();
         
         LoadCodeName();
+        LoadGroup();
         LoadAll();
         LoadHistory();
         
@@ -157,6 +157,67 @@ public class StockDataManager : MonoBehaviour
         sw.Dispose();
     }
     
+    public void LoadGroup()
+    {
+        var reader = File.OpenText("Assets/Resources/Stock/group.txt");
+
+        while (!reader.EndOfStream)
+        {
+            var ss = reader.ReadLine().Trim().Split(',');
+            var group = (GroupType)int.Parse(ss[0]);
+
+            for (int i = 1; i < ss.Length; i++)
+            {
+                Group.Add(ss[i], group);
+            }
+        }
+
+        reader.Close();
+        reader.Dispose();
+    }
+    
+    public bool AddGroup(string code, GroupType groupType)
+    {
+        return Group.TryAdd(code, groupType);
+    }
+
+    public GroupType GetGroup(string code)
+    {
+        if (Group.TryGetValue(code, out GroupType groupType))
+        {
+            return groupType;
+        }
+
+        return GroupType.No;
+    }
+
+    public void SaveGroup()
+    {
+        StreamWriter sw = new FileInfo("Assets/Resources/Stock/group.txt").CreateText();
+
+        Dictionary<GroupType, List<string>> dict = new Dictionary<GroupType, List<string>>();
+
+        foreach (var kv in Group)
+        {
+            if (dict.ContainsKey(kv.Value))
+            {
+                dict[kv.Value].Add(kv.Key);
+            }
+            else
+            {
+                dict.Add(kv.Value, new List<string>{ kv.Key });
+            }
+        }
+
+        foreach (var kv in dict)
+        {
+            sw.WriteLine($"{(int)kv.Key},{string.Join(',', kv.Value)}");
+        }
+
+        sw.Close();
+        sw.Dispose();
+    }
+
     public void LoadHistory()
     {
         var reader = File.OpenText("Assets/Resources/Stock/history.txt");
@@ -429,7 +490,7 @@ public class StockDataManager : MonoBehaviour
         SaveAll();
     }
 
-    public List<StockData> GetStockDatas(StockType stockType = StockType.All, SellType sellType = SellType.All)
+    public List<StockData> GetStockDatas(StockType stockType = StockType.All, SellType sellType = SellType.All, GroupType groupType = GroupType.No)
     {
         List<StockData> stockDatas = new List<StockData>();
 
@@ -453,6 +514,11 @@ public class StockDataManager : MonoBehaviour
             }
 
             stockDatas.Add(kv.Value);
+        }
+
+        if (groupType != GroupType.No)
+        {
+            stockDatas.RemoveAll(x => GetGroup(x.Code) != groupType);
         }
         
         stockDatas.Sort((a, b) => a.BuyDate.CompareTo(b.BuyDate));

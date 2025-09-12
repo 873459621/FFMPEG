@@ -31,6 +31,17 @@ public enum MergeType
     All,
 }
 
+public enum GroupType
+{
+    No = 0,
+    DaiMi,
+    BB,
+    MoDa,
+    BenZong,
+    HaiXia,
+    QiJiaYi,
+}
+
 public class StockData
 {
     //股票分类

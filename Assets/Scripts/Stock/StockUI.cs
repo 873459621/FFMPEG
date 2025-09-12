@@ -44,6 +44,13 @@ public class StockUI : UIBase
                 name = GetInputText("name");
             }
 
+            var group = (GroupType)GetDropdownId("group");
+
+            if (group != GroupType.No && StockDataManager.Instance.AddGroup(code, group))
+            {
+                StockDataManager.Instance.SaveGroup();
+            }
+
             if (curStockData != null)
             {
                 curStockData.Type = (StockType)GetDropdownId("type");
@@ -134,11 +141,12 @@ public class StockUI : UIBase
         var stockType = (StockType)GetDropdownId("stocktype");
         var sellType = (SellType)GetDropdownId("selltype");
         var mergeType = (MergeType)GetDropdownId("mergetype");
+        var groupType = (GroupType)GetDropdownId("grouptype");
 
         CurStockType = stockType;
         ShowExchange = GetToggle("exchange").isOn || CurStockType == StockType.All;
 
-        List<StockData> stockDatas = StockDataManager.Instance.GetStockDatas(stockType, sellType);
+        List<StockData> stockDatas = StockDataManager.Instance.GetStockDatas(stockType, sellType, groupType);
         
         var code = GetInputText("code");
 
@@ -367,6 +375,7 @@ public class StockUI : UIBase
         curStockData = stockData;
 
         GetDropdown("type").value = (int)stockData.Type;
+        GetDropdown("group").value = (int)StockDataManager.Instance.GetGroup(stockData.Code);
         GetInput("code").text = stockData.Code;
         GetInput("name").text = stockData.Name;
         GetInput("num").text = stockData.Num.ToString();
