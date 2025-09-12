@@ -40,6 +40,7 @@ public enum GroupType
     BenZong,
     HaiXia,
     QiJiaYi,
+    JiangZhiQiShui,
 }
 
 public class StockData
