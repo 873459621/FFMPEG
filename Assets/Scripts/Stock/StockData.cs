@@ -33,7 +33,7 @@ public enum MergeType
 
 public enum GroupType
 {
-    No = 0,
+    All = 0,
     DaiMi,
     BB,
     MoDa,
@@ -41,6 +41,7 @@ public enum GroupType
     HaiXia,
     QiJiaYi,
     JiangZhiQiShui,
+    Me = 9999,
 }
 
 public class StockData

@@ -210,7 +210,7 @@ public class StockDataManager : MonoBehaviour
             return groupType;
         }
 
-        return GroupType.No;
+        return GroupType.All;
     }
 
     public void SaveGroup()
@@ -512,7 +512,7 @@ public class StockDataManager : MonoBehaviour
         SaveAll();
     }
 
-    public List<StockData> GetStockDatas(StockType stockType = StockType.All, SellType sellType = SellType.All, GroupType groupType = GroupType.No)
+    public List<StockData> GetStockDatas(StockType stockType = StockType.All, SellType sellType = SellType.All, GroupType groupType = GroupType.All)
     {
         List<StockData> stockDatas = new List<StockData>();
 
@@ -538,9 +538,13 @@ public class StockDataManager : MonoBehaviour
             stockDatas.Add(kv.Value);
         }
 
-        if (groupType != GroupType.No)
+        if (groupType != GroupType.All && groupType != GroupType.Me)
         {
             stockDatas.RemoveAll(x => GetGroup(x.Code) != groupType);
+        }
+        else if (groupType == GroupType.Me)
+        {
+            stockDatas.RemoveAll(x => GetGroup(x.Code) != GroupType.All);
         }
         
         stockDatas.Sort((a, b) => a.BuyDate.CompareTo(b.BuyDate));

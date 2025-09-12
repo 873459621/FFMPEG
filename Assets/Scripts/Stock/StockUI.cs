@@ -46,7 +46,7 @@ public class StockUI : UIBase
 
             var group = (GroupType)GetDropdownId("group");
 
-            if (group != GroupType.No && StockDataManager.Instance.AddGroup(code, group))
+            if (group != GroupType.All && StockDataManager.Instance.AddGroup(code, group))
             {
                 StockDataManager.Instance.SaveGroup();
             }
@@ -147,7 +147,7 @@ public class StockUI : UIBase
         CurStockType = stockType;
         ShowExchange = GetToggle("exchange").isOn || CurStockType == StockType.All;
 
-        List<StockData> stockDatas = StockDataManager.Instance.GetStockDatas(stockType, sellType, groupType);
+        List<StockData> stockDatas = StockDataManager.Instance.GetStockDatas(stockType, sellType, GetToggle("me").isOn ? GroupType.Me : groupType);
         
         var code = GetInputText("code");
 
