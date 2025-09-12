@@ -178,6 +178,17 @@ public class StockDataManager : MonoBehaviour
     
     public bool AddGroup(string code, GroupType groupType)
     {
+        if (Group.ContainsKey(code))
+        {
+            if (groupType == Group[code])
+            {
+                return false;
+            }
+            
+            Group[code] = groupType;
+            return true;
+        }
+        
         return Group.TryAdd(code, groupType);
     }
 

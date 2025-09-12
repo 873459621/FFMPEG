@@ -94,6 +94,7 @@ public class StockUI : UIBase
             GetInput("profit").text = "";
             GetInput("buy").text = "";
             GetInput("sell").text = "";
+            GetDropdown("group").value = 0;
             
             RefreshList();
         });
