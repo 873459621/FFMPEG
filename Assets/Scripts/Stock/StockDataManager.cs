@@ -86,6 +86,17 @@ public class StockDataManager : MonoBehaviour
         LoadGroup();
         LoadAll();
         LoadHistory();
+
+        // BB老师处理
+        // foreach (var kv in StockDatas)
+        // {
+        //     if (kv.Value.Type == StockType.Long)
+        //     {
+        //         AddGroup(kv.Value.Code, GroupType.BB);
+        //     }
+        // }
+        //
+        // SaveGroup();
         
         Debug.Log($"当前美元汇率：{US_Exchange}");
         Debug.Log($"当前港元汇率：{HK_Exchange}");
