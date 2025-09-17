@@ -50,7 +50,7 @@ public class StockItem : UIBase
             GetButton("btn_sell").gameObject.SetActive(false);
             GetText("sell").text = stockData.SellDate.ToShortDateString();
             GetText("fsum").text = "";
-            GetText("funit").text = "";
+            GetText("funit").text = (stockData.Profit / stockData.Num + stockData.Unit).ToUnit();
         }
         else
         {
