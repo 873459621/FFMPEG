@@ -765,7 +765,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1957969567251409859, guid: 9693df56ba1161f499e9a3cab5e830eb, type: 3}
       propertyPath: m_Options.m_Options.Array.size
-      value: 8
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 1957969567251409859, guid: 9693df56ba1161f499e9a3cab5e830eb, type: 3}
       propertyPath: m_Options.m_Options.Array.data[1].m_Text
@@ -794,6 +794,10 @@ PrefabInstance:
     - target: {fileID: 1957969567251409859, guid: 9693df56ba1161f499e9a3cab5e830eb, type: 3}
       propertyPath: m_Options.m_Options.Array.data[7].m_Text
       value: "\u59DC\u6C41\u6C7D\u6C34"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1957969567251409859, guid: 9693df56ba1161f499e9a3cab5e830eb, type: 3}
+      propertyPath: m_Options.m_Options.Array.data[8].m_Text
+      value: "\u9C7C\u54E5"
       objectReference: {fileID: 0}
     - target: {fileID: 1957969568200225856, guid: 9693df56ba1161f499e9a3cab5e830eb, type: 3}
       propertyPath: m_AnchorMax.x
@@ -2681,7 +2685,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1957969567251409859, guid: 9693df56ba1161f499e9a3cab5e830eb, type: 3}
       propertyPath: m_Options.m_Options.Array.size
-      value: 8
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 1957969567251409859, guid: 9693df56ba1161f499e9a3cab5e830eb, type: 3}
       propertyPath: m_Options.m_Options.Array.data[1].m_Text
@@ -2710,6 +2714,10 @@ PrefabInstance:
     - target: {fileID: 1957969567251409859, guid: 9693df56ba1161f499e9a3cab5e830eb, type: 3}
       propertyPath: m_Options.m_Options.Array.data[7].m_Text
       value: "\u59DC\u6C41\u6C7D\u6C34"
+      objectReference: {fileID: 0}
+    - target: {fileID: 1957969567251409859, guid: 9693df56ba1161f499e9a3cab5e830eb, type: 3}
+      propertyPath: m_Options.m_Options.Array.data[8].m_Text
+      value: "\u9C7C\u54E5"
       objectReference: {fileID: 0}
     - target: {fileID: 1957969568200225856, guid: 9693df56ba1161f499e9a3cab5e830eb, type: 3}
       propertyPath: m_AnchorMax.x

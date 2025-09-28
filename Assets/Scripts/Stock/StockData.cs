@@ -41,6 +41,7 @@ public enum GroupType
     HaiXia,
     QiJiaYi,
     JiangZhiQiShui,
+    YuGe,
     Me = 9999,
 }
 
