@@ -74,6 +74,6 @@ calculate_hearthstone_value(oriPrice=488,num=80,goldNum=10,gLegendNum=2,ticketNu
 # calculate_hearthstone_value(oriPrice=60,num=30,legendNum=1)
 # calculate_hearthstone_value(oriPrice=198,num=90,legendNum=3)
 
-#calculate_hearthstone_value(oriPrice=488,num=80,goldNum=10,gLegendNum=2,ticketNum=4,heroNum=1,cardNum=1)
-#calculate_hearthstone_value(oriPrice=388,num=100,gLegendNum=2)
-#calculate_hearthstone_value(oriPrice=888,num=200,goldNum=20,gLegendNum=5)
+# calculate_hearthstone_value(oriPrice=60,legendNum=2,epicNum=4,rareNum=10,normalNum=14)
+# calculate_hearthstone_value(oriPrice=488,num=100,gLegendNum=2)
+calculate_hearthstone_value(oriPrice=888,num=200,goldNum=40,gLegendNum=4)
