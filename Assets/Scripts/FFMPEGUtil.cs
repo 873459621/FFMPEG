@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 using MediaInfoLib;
+using Microsoft.VisualBasic.FileIO;
 
 public class VideoInfo 
 {
@@ -19,6 +20,7 @@ public class VideoInfo
     public string Path { get; private set; }
     public int Width { get; private set; }
     public int Heigth { get; private set; }
+    public string Codec { get; private set; }
 
     public VideoInfo()
     {
@@ -36,11 +38,29 @@ public class VideoInfo
         Duration = k;
         int.TryParse(mi.Get(StreamKind.Video, 0, "BitRate"), out int m);
         Bitrate = m;
+        
+        string codec = mi.Get(StreamKind.Video, 0, "Format");
+
+        if (string.IsNullOrEmpty(codec))
+        {
+            Codec = "NO";
+        }
+        else
+        {
+            codec = codec.ToUpper();
+            
+            if (codec.Contains("AVC") || codec.Contains("H264"))
+                Codec = "H264";
+            else if (codec.Contains("HEVC") || codec.Contains("H265"))
+                Codec = "H265";
+            else
+                Codec = "NO";
+        }
     }
 
     public string ToTableStr()
     {
-        return $"{Name}{SP}{Bitrate}{SP}{Duration}{SP}{Path}{SP}{Width}{SP}{Heigth}";
+        return $"{Name}{SP}{Bitrate}{SP}{Duration}{SP}{Path}{SP}{Width}{SP}{Heigth}{SP}{Codec}";
     }
 
     public static VideoInfo ParseTableStr(string str)
@@ -54,6 +74,7 @@ public class VideoInfo
             Path = ss[3],
             Width = int.Parse(ss[4]),
             Heigth = int.Parse(ss[5]),
+            Codec = ss[6],
         };
     }
 }
@@ -222,7 +243,7 @@ public class FFMPEGUtil : MonoBehaviour
     {
         var path = $"{videoInfo.Path}\\{videoInfo.Name}";
 
-        if (!File.Exists(path))
+        if (!File.Exists(path) || path.Contains("$a$"))
         {
             return;
         }
@@ -386,13 +407,13 @@ public class FFMPEGUtil : MonoBehaviour
 
         foreach (var file in drive.GetDirectories())
         {
-            if (!file.FullName.Contains("$")
-                && !file.FullName.Contains("System")
+            if (!file.FullName.Contains("System")
                 && !file.FullName.Contains("gradle")
                 && !file.FullName.Contains("My proj")
                 && !file.FullName.Contains("proj")
                 && !file.FullName.Contains("SDK")
                 && !file.FullName.Contains("SteamLibrary")
+                && !file.FullName.Contains("RECYCLE")
                 && !file.FullName.Contains("miHoYo")
                 && !file.FullName.Contains("found.000")
                 && !file.FullName.Contains("Recovery"))
@@ -663,9 +684,10 @@ public class FFMPEGUtil : MonoBehaviour
 
         for (int i = 0; i < max; i++)
         {
-            if (isAll || (list[i].Bitrate < 1000 || list[i].Duration < 1000 || list[i].Width < 100)
-                || (list[i].Width < 1920 && list[i].Bitrate > MAX_BIT_L)
-                || (list[i].Width >= 1920 && list[i].Bitrate > MAX_BIT))
+            if (isAll 
+                || (list[i].Bitrate < 1000 || list[i].Duration < 1000 || list[i].Width < 100)
+                || (list[i].Width < 1920 && list[i].Bitrate > MAX_BIT_L && list[i].Codec != "H265")
+                || (list[i].Width >= 1920 && list[i].Bitrate > MAX_BIT && list[i].Codec != "H265"))
             {
                 sw.WriteLine(Move2(list[i]));
             }
@@ -765,6 +787,27 @@ public class FFMPEGUtil : MonoBehaviour
         }
     }
 
+    public void DeleteMp4(MP4 mp4)
+    {
+        var filePath = $"{mp4.Path}\\{mp4.Name}";
+        
+        if (!File.Exists(filePath))
+        {
+            Debug.LogError("文件不存在: " + filePath);
+        }
+        
+        try
+        {
+            FileSystem.DeleteFile(filePath, 
+                UIOption.OnlyErrorDialogs, 
+                RecycleOption.SendToRecycleBin);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("移动文件到回收站失败: " + e.Message);
+        }
+    }
+
     public void ReadTotal()
     {
         ClearMp4s();
@@ -778,6 +821,14 @@ public class FFMPEGUtil : MonoBehaviour
             if (!string.IsNullOrEmpty(s))
             {
                 var mp4 = MP4.ParseTableStr(s);
+                
+                var path = $"{mp4.Path}\\{mp4.Name}";
+
+                if (!File.Exists(path))
+                {
+                    continue;
+                }
+                
                 AddMp4(mp4);
             }
         }
@@ -1037,6 +1088,15 @@ public void TestFile(string tb)
                 list.Add(l);
             }
         }
+
+        list.RemoveAll(x => x[0].Name.Contains("yinyinai"));
+        list.RemoveAll(x => x[0].Name.Contains("淫淫爱"));
+        list.RemoveAll(x => x[0].Name.Contains("me-su"));
+        list.RemoveAll(x =>
+        {
+            var s = x[0].Name.Substring(0, x[0].Name.IndexOf('.'));
+            return s.All(c => char.IsDigit(c) || c == '(' || c == ')' || c == ' ');
+        });
 
         list.Sort((a, b) => b.Count.CompareTo(a.Count));
         return list;

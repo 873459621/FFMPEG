@@ -18,6 +18,7 @@ public class Item2 : MonoBehaviour
     public Button btn_file;
     public Button btn_folder;
     public Button btn_expand;
+    public Button btn_delete;
 
     public List<MP4> List;
     public MP4 Mp4;
@@ -38,6 +39,13 @@ public class Item2 : MonoBehaviour
         {
             UI2.Instance.ShowList(List);
         });
+        
+        btn_delete.onClick.AddListener(() =>
+        {
+            FFMPEGUtil.Instance.DeleteMp4(Mp4);
+            FFMPEGUtil.Instance.ReadTotal();
+            UI2.Instance.ShowList(FFMPEGUtil.Instance.GetSameNameList());
+        });
     }
 
     public void ShowMp4(MP4 mp4)
@@ -48,6 +56,7 @@ public class Item2 : MonoBehaviour
         btn_file.gameObject.SetActive(true);
         btn_folder.gameObject.SetActive(true);
         btn_expand.gameObject.SetActive(false);
+        btn_delete.gameObject.SetActive(true);
     }
     
     public void ShowList(List<MP4> list, ShowType type = ShowType.Name)
@@ -71,5 +80,6 @@ public class Item2 : MonoBehaviour
         btn_file.gameObject.SetActive(false);
         btn_folder.gameObject.SetActive(false);
         btn_expand.gameObject.SetActive(true);
+        btn_delete.gameObject.SetActive(false);
     }
 }
