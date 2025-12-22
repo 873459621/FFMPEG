@@ -22,6 +22,18 @@ public class VideoInfo
     public int Heigth { get; private set; }
     public string Codec { get; private set; }
 
+    public string PathFolderName
+    {
+        get
+        {
+            var p = Path.Replace("\\", "/");
+            p = p.Replace("/", "-");
+            p = p.Replace(".", "-");
+            p = p.Replace(":", "-");
+            return p;
+        }
+    }
+
     public VideoInfo()
     {
     }
@@ -214,8 +226,12 @@ public class FFMPEGUtil : MonoBehaviour
     private const long MIN_LEN = 50L * 1024L * 1024L;
     private const long MAX_BIT = 2500000;
     private const long MAX_BIT_L = 1150000;
+    private const long MAX_BIT_265 = 5000000;
+    private const long MAX_BIT_L_265 = 2300000;
 
     public Dictionary<string, VideoInfo> VideoInfos = new Dictionary<string, VideoInfo>();
+    
+    public Dictionary<string, VideoInfo> AllVideoInfos = new Dictionary<string, VideoInfo>();
 
     public Dictionary<string, Dictionary<string, VideoInfo>> SameNameVideoInfos =
         new Dictionary<string, Dictionary<string, VideoInfo>>();
@@ -243,9 +259,14 @@ public class FFMPEGUtil : MonoBehaviour
     {
         var path = $"{videoInfo.Path}\\{videoInfo.Name}";
 
-        if (!File.Exists(path) || path.Contains("$a$"))
+        if (!File.Exists(path))
         {
             return;
+        }
+
+        if (!AllVideoInfos.TryAdd(path, videoInfo))
+        {
+            Debug.LogError($"同路径文件：{path}");
         }
 
         if (VideoInfos.ContainsKey(videoInfo.Name))
@@ -642,26 +663,77 @@ public class FFMPEGUtil : MonoBehaviour
 
     public void GenSH(int max)
     {
-        var list = VideoInfos.Values.ToList();
+        var list = AllVideoInfos.Values.ToList();
         Sort(list);
 
         max = Mathf.Min(max, list.Count);
+        
+        Dictionary<string, int> nameCache = new Dictionary<string, int>();
+        Dictionary<string, int> sameNameDict = new Dictionary<string, int>();
+
+        foreach (var v in list)
+        {
+            var trueName = v.Name.Substring(0, v.Name.LastIndexOf('.'));
+
+            if (!nameCache.TryAdd(trueName, 1))
+            {
+                sameNameDict.TryAdd(trueName, 1);
+            }
+        }
 
         StreamWriter sw;
         FileInfo fi = new FileInfo($"Assets/Resources/encode.sh");
         sw = fi.CreateText();
+        int n = 0;
 
         for (int i = 0; i < max; i++)
         {
-            if ((list[i].Bitrate < 1000 || list[i].Duration < 1000 || list[i].Width < 100)
-                || (list[i].Width < 1920 && list[i].Bitrate > MAX_BIT_L)
-                || (list[i].Width >= 1920 && list[i].Bitrate > MAX_BIT))
+            if (list[i].Path.Contains("$a$"))
             {
-                var str = UseH265 ? Encode2(list[i]) : Encode(list[i]);
-
-                if (!string.IsNullOrEmpty(str))
+                continue;
+            }
+            
+            if ((list[i].Bitrate < 1000 || list[i].Duration < 1000 || list[i].Width < 100)
+                || (list[i].Width < 1920 && list[i].Bitrate > MAX_BIT_L && list[i].Codec != "H265")
+                || (list[i].Width >= 1920 && list[i].Bitrate > MAX_BIT && list[i].Codec != "H265")
+                || (list[i].Width < 1920 && list[i].Bitrate > MAX_BIT_L_265 && list[i].Codec == "H265")
+                || (list[i].Width >= 1920 && list[i].Bitrate > MAX_BIT_265 && list[i].Codec == "H265"))
+            {
+                var trueName = list[i].Name.Substring(0, list[i].Name.LastIndexOf('.'));
+                
+                if (sameNameDict.ContainsKey(trueName))
                 {
-                    sw.WriteLine(str);
+                    string order = $"mkdir -p \"{OutPutPath}\\{list[i].PathFolderName}\\\"";
+                    order = order.Replace("\\", "/");
+                    sw.WriteLine(order);
+                    
+                    string path = $"{OutPutPath}\\{list[i].PathFolderName}\\{trueName}.mp4";
+
+                    if (File.Exists(path))
+                    {
+                        Debug.LogError($"{path}已存在，请删除！");
+                    }
+                    else
+                    {
+                        var s = UseH265 ? "5" : "4";
+                        string scale = list[i].Width > 1920 ? ",scale=1920:1080" : "";
+                        order = $"ffmpeg -i \"{list[i].Path}\\{list[i].Name}\" -vf fps=30{scale} -c:v libx26{s} -preset medium -c:a aac \"{path}\"";
+                        order = order.Replace("\\", "/");
+                        sw.WriteLine(order);
+                    }
+
+                    n++;
+                    
+                    Debug.LogError($"第{n}个同名文件: {trueName}");
+                }
+                else
+                {
+                    var str = UseH265 ? Encode2(list[i]) : Encode(list[i]);
+
+                    if (!string.IsNullOrEmpty(str))
+                    {
+                        sw.WriteLine(str);
+                    }
                 }
             }
         }
@@ -673,23 +745,63 @@ public class FFMPEGUtil : MonoBehaviour
 
     public void GenMoveSH(int max, bool isAll = false)
     {
-        var list = VideoInfos.Values.ToList();
+        var list = AllVideoInfos.Values.ToList();
         Sort(list);
-
+        
         max = Mathf.Min(max, list.Count);
+
+        Dictionary<string, int> nameCache = new Dictionary<string, int>();
+        Dictionary<string, int> sameNameDict = new Dictionary<string, int>();
+
+        foreach (var v in list)
+        {
+            var trueName = v.Name.Substring(0, v.Name.LastIndexOf('.'));
+
+            if (!nameCache.TryAdd(trueName, 1))
+            {
+                sameNameDict.TryAdd(trueName, 1);
+            }
+        }
 
         StreamWriter sw;
         FileInfo fi = new FileInfo($"Assets/Resources/move.sh");
         sw = fi.CreateText();
+        int n = 0;
 
         for (int i = 0; i < max; i++)
         {
+            if (list[i].Path.Contains("$a$"))
+            {
+                continue;
+            }
+            
             if (isAll 
                 || (list[i].Bitrate < 1000 || list[i].Duration < 1000 || list[i].Width < 100)
                 || (list[i].Width < 1920 && list[i].Bitrate > MAX_BIT_L && list[i].Codec != "H265")
-                || (list[i].Width >= 1920 && list[i].Bitrate > MAX_BIT && list[i].Codec != "H265"))
+                || (list[i].Width >= 1920 && list[i].Bitrate > MAX_BIT && list[i].Codec != "H265")
+                || (list[i].Width < 1920 && list[i].Bitrate > MAX_BIT_L_265 && list[i].Codec == "H265")
+                || (list[i].Width >= 1920 && list[i].Bitrate > MAX_BIT_265 && list[i].Codec == "H265"))
             {
-                sw.WriteLine(Move2(list[i]));
+                var trueName = list[i].Name.Substring(0, list[i].Name.LastIndexOf('.'));
+                
+                if (sameNameDict.ContainsKey(trueName))
+                {
+                    string order = $"mkdir -p \"{MovePath}\\{list[i].PathFolderName}\\\"";
+                    order = order.Replace("\\", "/");
+                    sw.WriteLine(order);
+                    
+                    order = $"mv \"{list[i].Path}\\{list[i].Name}\" \"{MovePath}\\{list[i].PathFolderName}\\\"";
+                    order = order.Replace("\\", "/");
+                    sw.WriteLine(order);
+
+                    n++;
+                    
+                    Debug.LogError($"第{n}个同名文件: {trueName}");
+                }
+                else
+                {
+                    sw.WriteLine(Move2(list[i]));
+                }
             }
         }
 
@@ -700,6 +812,22 @@ public class FFMPEGUtil : MonoBehaviour
 
     public IEnumerator GenDelSH()
     {
+        var list = AllVideoInfos.Values.ToList();
+        Sort(list);
+        
+        Dictionary<string, int> nameCache = new Dictionary<string, int>();
+        Dictionary<string, int> sameNameDict = new Dictionary<string, int>();
+
+        foreach (var v in list)
+        {
+            var trueName = v.Name.Substring(0, v.Name.LastIndexOf('.'));
+
+            if (!nameCache.TryAdd(trueName, 1))
+            {
+                sameNameDict.TryAdd(trueName, 1);
+            }
+        }
+        
         StreamWriter sw;
         FileInfo fi = new FileInfo($"Assets/Resources/del.sh");
         sw = fi.CreateText();
@@ -708,6 +836,8 @@ public class FFMPEGUtil : MonoBehaviour
 
         foreach (var file in directoryInfo.GetFiles())
         {
+            var trueName = file.Name.Substring(0, file.Name.LastIndexOf('.'));
+            
             if (VideoInfos.ContainsKey(file.Name))
             {
                 var path = $"{VideoInfos[file.Name].Path}\\{VideoInfos[file.Name].Name}";
