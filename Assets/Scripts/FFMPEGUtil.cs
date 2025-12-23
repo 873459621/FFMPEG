@@ -244,6 +244,15 @@ public class FFMPEGUtil : MonoBehaviour
         mi.Close();
         return videoInfo;
     }
+    
+    private static VideoInfo GetInfo(string path)
+    {
+        var mi = new MediaInfo();
+        mi.Open(path);
+        var videoInfo = new VideoInfo(path, "xxx", mi);
+        mi.Close();
+        return videoInfo;
+    }
 
     void Awake()
     {
@@ -817,6 +826,7 @@ public class FFMPEGUtil : MonoBehaviour
         
         Dictionary<string, int> nameCache = new Dictionary<string, int>();
         Dictionary<string, int> sameNameDict = new Dictionary<string, int>();
+        Dictionary<string, VideoInfo> delDict = new Dictionary<string, VideoInfo>();
 
         foreach (var v in list)
         {
@@ -831,42 +841,70 @@ public class FFMPEGUtil : MonoBehaviour
         StreamWriter sw;
         FileInfo fi = new FileInfo($"Assets/Resources/del.sh");
         sw = fi.CreateText();
-
-        DirectoryInfo directoryInfo = new DirectoryInfo(OutPutPath);
-
-        foreach (var file in directoryInfo.GetFiles())
+        
+        for (int i = 0; i < list.Count; i++)
         {
-            var trueName = file.Name.Substring(0, file.Name.LastIndexOf('.'));
-            
-            if (VideoInfos.ContainsKey(file.Name))
+            if (list[i].Path.Contains("$a$"))
             {
-                var path = $"{VideoInfos[file.Name].Path}\\{VideoInfos[file.Name].Name}";
-
-                if (File.Exists(path))
+                continue;
+            }
+            
+            if ((list[i].Bitrate < 1000 || list[i].Duration < 1000 || list[i].Width < 100)
+                || (list[i].Width < 1920 && list[i].Bitrate > MAX_BIT_L && list[i].Codec != "H265")
+                || (list[i].Width >= 1920 && list[i].Bitrate > MAX_BIT && list[i].Codec != "H265")
+                || (list[i].Width < 1920 && list[i].Bitrate > MAX_BIT_L_265 && list[i].Codec == "H265")
+                || (list[i].Width >= 1920 && list[i].Bitrate > MAX_BIT_265 && list[i].Codec == "H265"))
+            {
+                var trueName = list[i].Name.Substring(0, list[i].Name.LastIndexOf('.'));
+                
+                if (sameNameDict.ContainsKey(trueName))
                 {
-                    var videoInfo = GetInfo(directoryInfo.FullName, file.Name);
+                    string order = $"mkdir -p \"{OutPutPath}\\{list[i].PathFolderName}\\\"";
+                    order = order.Replace("\\", "/");
+                    sw.WriteLine(order);
+                    
+                    string path = $"{OutPutPath}\\{list[i].PathFolderName}\\{trueName}.mp4";
 
-                    if (videoInfo != null)
+                    if (File.Exists(path))
                     {
-                        var d = videoInfo.Duration - VideoInfos[file.Name].Duration;
-
-                        if (d > 1000 || d < -1000)
-                        {
-                            Debug.LogError($"时长不对：{directoryInfo.FullName}\\{file.Name}");
-                        }
-                        else
-                        {
-                            sw.WriteLine(Del(VideoInfos[file.Name]));
-                        }
+                        delDict.Add(path, list[i]);
                     }
-                    else
+                }
+                else
+                {
+                    string path = $"{OutPutPath}\\{trueName}.mp4";
+
+                    if (File.Exists(path))
                     {
-                        Debug.LogError($"无法解析：{directoryInfo.FullName}\\{file.Name}");
+                        delDict.Add(path, list[i]);
                     }
-
-                    yield return null;
                 }
             }
+        }
+
+        foreach (var kvp in delDict)
+        {
+            var videoInfo = GetInfo(kvp.Key);
+
+            if (videoInfo != null)
+            {
+                var d = videoInfo.Duration - kvp.Value.Duration;
+
+                if (d > 1000 || d < -1000)
+                {
+                    Debug.LogError($"时长不对：{kvp.Key}");
+                }
+                else
+                {
+                    sw.WriteLine(Del(kvp.Value));
+                }
+            }
+            else
+            {
+                Debug.LogError($"无法解析：{kvp.Key}");
+            }
+
+            yield return null;
         }
 
         sw.Close();
