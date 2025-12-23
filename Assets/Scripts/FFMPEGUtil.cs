@@ -408,12 +408,28 @@ public class FFMPEGUtil : MonoBehaviour
     {
         videos.Sort((a, b) =>
         {
-            if (b.Bitrate < 1000 || b.Duration < 1000 || b.Width < 100)
+            var ea = a.Bitrate < 1000 || a.Duration < 1000 || a.Width < 100;
+            var eb = b.Bitrate < 1000 || b.Duration < 1000 || b.Width < 100;
+
+            if (ea && !eb)
+            {
+                return -1;
+            }
+            
+            if (!ea && eb)
             {
                 return 1;
             }
 
-            if (b.Width < 1920 && b.Bitrate > MAX_BIT_L)
+            var sa = a.Width < 1920 && a.Bitrate > MAX_BIT_L;
+            var sb = b.Width < 1920 && b.Bitrate > MAX_BIT_L;
+
+            if (sa && !sb)
+            {
+                return -1;
+            }
+            
+            if (!sa && sb)
             {
                 return 1;
             }
@@ -1239,9 +1255,9 @@ public void TestFile(string tb)
             }
         }
 
-        list.RemoveAll(x => x[0].Name.Contains("yinyinai"));
-        list.RemoveAll(x => x[0].Name.Contains("淫淫爱"));
-        list.RemoveAll(x => x[0].Name.Contains("me-su"));
+        // list.RemoveAll(x => x[0].Name.Contains("yinyinai"));
+        // list.RemoveAll(x => x[0].Name.Contains("淫淫爱"));
+        // list.RemoveAll(x => x[0].Name.Contains("me-su"));
         list.RemoveAll(x =>
         {
             var s = x[0].Name.Substring(0, x[0].Name.IndexOf('.'));
