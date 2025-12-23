@@ -100,8 +100,17 @@ public class MP4
     public string Sub;
     public string Path;
     public string RealName;
+    public string VideoName = "";
 
     public bool IsMatch = false;
+
+    public string PreSub
+    {
+        get
+        {
+            return $"{Pre}-{Sub}";
+        }
+    }
     
     public MP4()
     {
@@ -109,6 +118,7 @@ public class MP4
     
     public MP4(string str, string path = null)
     {
+        VideoName = str;
         Path = path;
 
         if (!string.IsNullOrEmpty(path))
@@ -910,8 +920,98 @@ public class FFMPEGUtil : MonoBehaviour
         Debug.LogError("sh生成成功");
     }
 
+    public void GenDistributeSH()
+    {
+        ClearMp4s();
+        
+        var list = AllVideoInfos.Values.ToList();
+        Sort(list);
+
+        foreach (var video in list)
+        {
+            var mp4 = new MP4(video.Name, $"{video.Path}\\{video.Name}");
+            AddMp4(mp4);
+        }
+        
+        StreamWriter sw;
+        FileInfo fi = new FileInfo($"Assets/Resources/distribute.sh");
+        sw = fi.CreateText();
+        
+        string order;
+
+        foreach (var pre in Pre.Keys)
+        {
+            if (Pre[pre].Count > 1)
+            {
+                order = $"mkdir -p \"{MovePath}\\{pre}\\\"";
+                order = order.Replace("\\", "/");
+                sw.WriteLine(order);
+            }
+        }
+        
+        foreach (var presub in PreSub.Keys)
+        {
+            if (PreSub[presub].Count > 1)
+            {
+                order = $"mkdir -p \"{MovePath}\\{PreSub[presub][0].Pre}\\{presub}\\\"";
+                order = order.Replace("\\", "/");
+                sw.WriteLine(order);
+            }
+        }
+        
+        //TODO 关键字
+        List<string> keywords = new List<string>()
+        {
+            "淫淫爱",
+            "韩国悲惨",
+            "pickupgirl",
+        };
+        
+        foreach (var mp4 in Mp4s)
+        {
+            if (mp4.IsMatch && Same[mp4.VideoName].Count == 1)
+            {
+                if (PreSub.ContainsKey(mp4.PreSub))
+                {
+                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\{mp4.Pre}\\{mp4.PreSub}\\\"";
+                    order = order.Replace("\\", "/");
+                    sw.WriteLine(order);
+                }
+                else
+                {
+                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\{mp4.Pre}\\\"";
+                    order = order.Replace("\\", "/");
+                    sw.WriteLine(order);
+                }
+            }
+            else if (!mp4.IsMatch && Same[mp4.VideoName].Count == 1)
+            {
+                foreach (var key in keywords)
+                {
+                    if (mp4.VideoName.Contains(key))
+                    {
+                        order = $"mkdir -p \"{MovePath}\\{key}\\\"";
+                        order = order.Replace("\\", "/");
+                        sw.WriteLine(order);
+                        
+                        order = $"mv \"{mp4.Path}\" \"{MovePath}\\{key}\\\"";
+                        order = order.Replace("\\", "/");
+                        sw.WriteLine(order);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        sw.Close();
+        sw.Dispose();
+        Debug.LogError("sh生成成功");
+    }
+
     public List<MP4> Mp4s = new List<MP4>();
+    public Dictionary<string, List<MP4>> Same = new Dictionary<string, List<MP4>>();
     public Dictionary<string, List<MP4>> Total = new Dictionary<string, List<MP4>>();
+    public Dictionary<string, List<MP4>> PreSub = new Dictionary<string, List<MP4>>();
     public Dictionary<string, List<MP4>> Pre = new Dictionary<string, List<MP4>>();
     public Dictionary<string, List<MP4>> Sub = new Dictionary<string, List<MP4>>();
     public Dictionary<string, List<MP4>> Non = new Dictionary<string, List<MP4>>();
@@ -919,7 +1019,9 @@ public class FFMPEGUtil : MonoBehaviour
     public void ClearMp4s()
     {
         Mp4s.Clear();
+        Same.Clear();
         Total.Clear();
+        PreSub.Clear();
         Pre.Clear();
         Sub.Clear();
         Non.Clear();
@@ -940,12 +1042,14 @@ public class FFMPEGUtil : MonoBehaviour
     public void AddMp4(MP4 mp4)
     {
         Mp4s.Add(mp4);
+        AddMp4ToDict(mp4, mp4.VideoName, Same);
         AddMp4ToDict(mp4, mp4.Name, Total);
 
         if (mp4.IsMatch)
         {
             AddMp4ToDict(mp4, mp4.Pre, Pre);
             AddMp4ToDict(mp4, mp4.Sub, Sub);
+            AddMp4ToDict(mp4, mp4.PreSub, PreSub);
         }
         else
         {

@@ -50,6 +50,11 @@ public class UI : MonoBehaviour
             FFMPEGUtil.Instance.GenMoveSH(int.Parse(Output.text), true);
         });
         
+        AddListener("btn_dis", () =>
+        {
+            FFMPEGUtil.Instance.GenDistributeSH();
+        });
+        
         btn_del.onClick.AddListener(() =>
         {
             StartCoroutine(FFMPEGUtil.Instance.GenDelSH());
