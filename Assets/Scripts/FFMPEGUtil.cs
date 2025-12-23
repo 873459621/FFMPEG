@@ -26,7 +26,7 @@ public class VideoInfo
     {
         get
         {
-            var p = Path.Replace("\\", "/");
+            var p = $"{Path}\\{Name}".Replace("\\", "/");
             p = p.Replace("/", "-");
             p = p.Replace(".", "-");
             p = p.Replace(":", "-");
@@ -631,32 +631,14 @@ public class FFMPEGUtil : MonoBehaviour
         }
 
         string scale = info.Width > 1920 ? ",scale=1920:1080" : "";
+        string s = UseH265 ? "5" : "4";
         string order =
-            $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx264 -preset medium -c:a aac \"{OutPutPath}\\{name}.mp4\"";
+            $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx26{s} -preset medium -c:a aac \"{OutPutPath}\\{name}.mp4\"";
         order = order.Replace("\\", "/");
         return order;
     }
 
-    public string Encode2(VideoInfo info)
-    {
-        string name = info.Name;
-        name = name.Substring(0, name.LastIndexOf('.'));
-        string path = $"{OutPutPath}\\{name}.mp4";
-
-        if (File.Exists(path))
-        {
-            Debug.LogError($"{path}已存在，请删除！");
-            return "";
-        }
-
-        string scale = info.Width > 1920 ? ",scale=1920:1080" : "";
-        string order =
-            $"ffmpeg -i \"{info.Path}\\{info.Name}\" -vf fps=30{scale} -c:v libx265 -preset medium -c:a aac \"{OutPutPath}\\{name}.mp4\"";
-        order = order.Replace("\\", "/");
-        return order;
-    }
-
-    public string Move2(VideoInfo info)
+    public string Move(VideoInfo info)
     {
         string order = $"mv \"{info.Path}\\{info.Name}\" \"{MovePath}\\\"";
         order = order.Replace("\\", "/");
@@ -737,7 +719,7 @@ public class FFMPEGUtil : MonoBehaviour
                 }
                 else
                 {
-                    var str = UseH265 ? Encode2(list[i]) : Encode(list[i]);
+                    var str = Encode(list[i]);
 
                     if (!string.IsNullOrEmpty(str))
                     {
@@ -809,7 +791,7 @@ public class FFMPEGUtil : MonoBehaviour
                 }
                 else
                 {
-                    sw.WriteLine(Move2(list[i]));
+                    sw.WriteLine(Move(list[i]));
                 }
             }
         }
