@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -129,15 +130,21 @@ public class MP4
 
         List<Regex> list = new List<Regex>()
         {
-            new Regex("[a-zA-Z0-9]{2,}-[0-9]{2,}"),
-            new Regex("[a-zA-Z0-9]{2,}_[0-9]{2,}"),
-            new Regex("[a-zA-Z0-9]{2,} [0-9]{2,}"),
-            new Regex("[0-9]{6,}"),
+            new Regex("[a-zA-Z]{2,}-[0-9]{2,}"),
+            new Regex("[a-zA-Z]{2,}_[0-9]{2,}"),
+            new Regex("[a-zA-Z]{2,} [0-9]{2,}"),
+            new Regex("[a-zA-Z]{2,}[0-9]{1,}-[0-9]{2,}"),
+            new Regex("[a-zA-Z]{2,}[0-9]{1,}_[0-9]{2,}"),
+            new Regex("[a-zA-Z]{2,}[0-9]{1,} [0-9]{2,}"),
             new Regex("[a-zA-Z]{2,}[0-9]{2,}"),
+            new Regex("[0-9]{6,}"),
         };
 
         List<char> sps = new List<char>()
         {
+            '-',
+            '_',
+            ' ',
             '-',
             '_',
             ' ',
@@ -155,31 +162,38 @@ public class MP4
                     var ss = Name.Split(sps[i]);
                     Pre = ss[0];
                     Sub = ss[1];
-
-                    if (int.TryParse(Pre, out i))
-                    {
-                        Name = Pre;
-                        Sub = Pre;
-                    }
+                    
+                    IsMatch = true;
                 }
                 else
                 {
-                    if (i == list.Count - 1)
+                    if (i == list.Count - 2)
                     {
                         var reg1 = new Regex("[a-zA-Z]{2,}");
                         var reg2 = new Regex("[0-9]{2,}");
                         Name = match.Value.ToLower();
                         Pre = reg1.Match(Name).Value;
                         Sub = reg2.Match(Name).Value;
+                        
+                        IsMatch = true;
                     }
                     else
                     {
                         Name = match.Value;
                         Pre = Name;
                         Sub = Name;
+                        
+                        //剔除日期
+                        if (DateTime.TryParseExact(Name, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime result) && result.Year > 1969)
+                        {
+                            IsMatch = false;
+                        }
+                        else
+                        {
+                            IsMatch = true;
+                        }
                     }
                 }
-                IsMatch = true;
                 break;
             }
         }
@@ -278,7 +292,7 @@ public class FFMPEGUtil : MonoBehaviour
     {
         var path = $"{videoInfo.Path}\\{videoInfo.Name}";
 
-        if (!File.Exists(path))
+        if (CheckFile && !File.Exists(path))
         {
             return;
         }
@@ -643,6 +657,7 @@ public class FFMPEGUtil : MonoBehaviour
     public string OutPutPath;
     public string MovePath;
     public bool UseH265 = true;
+    public bool CheckFile = true;
 
     public string Encode(VideoInfo info)
     {
@@ -919,6 +934,12 @@ public class FFMPEGUtil : MonoBehaviour
         sw.Dispose();
         Debug.LogError("sh生成成功");
     }
+    
+    public static bool ContainsChinese(string input)
+    {
+        // 匹配中文字符（包括基本汉字、扩展汉字等）
+        return Regex.IsMatch(input, @"[\u4e00-\u9fa5]");
+    }
 
     public void GenDistributeSH()
     {
@@ -943,7 +964,7 @@ public class FFMPEGUtil : MonoBehaviour
         {
             if (Pre[pre].Count > 1)
             {
-                order = $"mkdir -p \"{MovePath}\\{pre}\\\"";
+                order = $"mkdir -p \"{MovePath}\\番号\\{pre}\\\"";
                 order = order.Replace("\\", "/");
                 sw.WriteLine(order);
             }
@@ -953,53 +974,166 @@ public class FFMPEGUtil : MonoBehaviour
         {
             if (PreSub[presub].Count > 1)
             {
-                order = $"mkdir -p \"{MovePath}\\{PreSub[presub][0].Pre}\\{presub}\\\"";
+                order = $"mkdir -p \"{MovePath}\\番号\\{PreSub[presub][0].Pre}\\{presub}\\\"";
                 order = order.Replace("\\", "/");
                 sw.WriteLine(order);
             }
         }
         
-        //TODO 关键字
         List<string> keywords = new List<string>()
         {
+            "壹屌",
+            "文轩",
+            "肌肉佬",
+            "小宝",
+            "李寻欢",
+            "Dr哥",
+            "沈先",
+            "夯先生",
+            "雀儿满天飞",
+            "进厂",
             "淫淫爱",
-            "韩国悲惨",
-            "pickupgirl",
+            "June Liu",
+            "变态冷",
+            "风吟鸟唱",
+            "辛尤里",
+            "大熊",
+            "战狼",
+            "风-财",
+            "横扫全",
+            "全国探",
+            "潜入风俗店",
+            "老猫",
+            "秦总",
+            "康先生",
+            "尹志平",
+            "第一深情",
+            "七天",
+            "大王",
+            "仓本C",
+            "虫哥",
+            "芸能",
+            "pick",
+            "眼镜哥",
+            "OnlyFans",
+            "Pick",
+            "老污龟",
+            "德州",
+            "汤先生",
+            "曹先生",
+            "吾爱",
+            "裤哥",
+            "王子哥",
+            "小蝴蝶",
+
+            "萝莉原创",
+            "海角",
+            "杏吧",
+            
+            "寻欢",
+            "寻花",
+            "探花",
+            "会所",
+            
+            "莞式",
+            "KTV",
+            "ktv",
+            "外围",
+            "调教",
+            "足交",
+            "足浴",
+            "无套",
+            "内射",
+            "大神",
+            "土豪",
+            "二代",
+            "模特",
+            "偷情",
+            "淫妻",
+            "嫖",
+            "健身房",
+            "口活",
         };
+        
+        foreach (var k in keywords)
+        {
+            order = $"mkdir -p \"{MovePath}\\国产\\{k}\\\"";
+            order = order.Replace("\\", "/");
+            sw.WriteLine(order);
+        }
+        
+        order = $"mkdir -p \"{MovePath}\\番号\\其他\\\"";
+        order = order.Replace("\\", "/");
+        sw.WriteLine(order);
+        
+        order = $"mkdir -p \"{MovePath}\\国产\\未知\\\"";
+        order = order.Replace("\\", "/");
+        sw.WriteLine(order);
+        
+        order = $"mkdir -p \"{MovePath}\\英文\\\"";
+        order = order.Replace("\\", "/");
+        sw.WriteLine(order);
+        
+        string key;
         
         foreach (var mp4 in Mp4s)
         {
-            if (mp4.IsMatch && Same[mp4.VideoName].Count == 1)
+            if (Same[mp4.VideoName].Count > 1)
             {
-                if (PreSub.ContainsKey(mp4.PreSub))
+                continue;
+            }
+            
+            key = "";
+            
+            foreach (var k in keywords)
+            {
+                if (mp4.VideoName.Contains(k))
                 {
-                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\{mp4.Pre}\\{mp4.PreSub}\\\"";
+                    key = k;
+                    break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(key))
+            {
+                order = $"mv \"{mp4.Path}\" \"{MovePath}\\国产\\{key}\\\"";
+                order = order.Replace("\\", "/");
+                sw.WriteLine(order);
+                continue;
+            }
+            
+            if (mp4.IsMatch)
+            {
+                if (PreSub.ContainsKey(mp4.PreSub) && PreSub[mp4.PreSub].Count > 1)
+                {
+                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\番号\\{mp4.Pre}\\{mp4.PreSub}\\\"";
                     order = order.Replace("\\", "/");
                     sw.WriteLine(order);
+                    continue;
+                }
+                else if (Pre.ContainsKey(mp4.Pre) && Pre[mp4.Pre].Count > 1)
+                {
+                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\番号\\{mp4.Pre}\\\"";
+                    order = order.Replace("\\", "/");
+                    sw.WriteLine(order);
+                    continue;
                 }
                 else
                 {
-                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\{mp4.Pre}\\\"";
-                    order = order.Replace("\\", "/");
-                    sw.WriteLine(order);
                 }
             }
-            else if (!mp4.IsMatch && Same[mp4.VideoName].Count == 1)
+
+            if (ContainsChinese(mp4.VideoName))
             {
-                foreach (var key in keywords)
-                {
-                    if (mp4.VideoName.Contains(key))
-                    {
-                        order = $"mkdir -p \"{MovePath}\\{key}\\\"";
-                        order = order.Replace("\\", "/");
-                        sw.WriteLine(order);
-                        
-                        order = $"mv \"{mp4.Path}\" \"{MovePath}\\{key}\\\"";
-                        order = order.Replace("\\", "/");
-                        sw.WriteLine(order);
-                        break;
-                    }
-                }
+                order = $"mv \"{mp4.Path}\" \"{MovePath}\\国产\\未知\\\"";
+                order = order.Replace("\\", "/");
+                sw.WriteLine(order);
+            }
+            else
+            {
+                order = $"mv \"{mp4.Path}\" \"{MovePath}\\英文\\\"";
+                order = order.Replace("\\", "/");
+                sw.WriteLine(order);
             }
         }
         
