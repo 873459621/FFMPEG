@@ -60,6 +60,11 @@ public class UI : MonoBehaviour
             FFMPEGUtil.Instance.GenDelSameSH();
         });
         
+        AddListener("btn_rename", () =>
+        {
+            FFMPEGUtil.Instance.GenRenameSH();
+        });
+        
         btn_del.onClick.AddListener(() =>
         {
             StartCoroutine(FFMPEGUtil.Instance.GenDelSH());

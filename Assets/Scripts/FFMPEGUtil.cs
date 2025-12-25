@@ -1121,6 +1121,12 @@ public class FFMPEGUtil : MonoBehaviour
             "王子哥",
             "小蝴蝶",
             "曹长卿",
+            "娜娜",
+            "利哥",
+            "HongKongDoll",
+            "秦先生",
+            "老王",
+            "美男子",
 
             "萝莉原创",
             "海角",
@@ -1149,6 +1155,8 @@ public class FFMPEGUtil : MonoBehaviour
             "嫖",
             "健身房",
             "口活",
+            "偷拍",
+            "泡良",
         };
         
         string order;
@@ -1271,6 +1279,43 @@ public class FFMPEGUtil : MonoBehaviour
             }
         }
         
+        sw.Close();
+        sw.Dispose();
+        Debug.LogError("sh生成成功");
+    }
+    
+    public static bool IsOnlyDigitsAndSymbols(string input)
+    {
+        // 正则表达式：^[0-9\s\p{P}\p{S}]+$
+        // 解释：
+        // ^ 字符串开始
+        // [0-9\p{P}\p{S}]+ 匹配一个或多个：数字、标点符号、符号
+        // $ 字符串结束
+        return Regex.IsMatch(input, @"^[\d\p{P}\p{S}\s]*$");
+    }
+    
+    public void GenRenameSH()
+    {
+        var list = AllVideoInfos.Values.ToList();
+        Sort(list);
+
+        StreamWriter sw;
+        FileInfo fi = new FileInfo($"Assets/Resources/rename.sh");
+        sw = fi.CreateText();
+
+        foreach (var v in list)
+        {
+            var trueName = v.Name.Substring(0, v.Name.LastIndexOf('.'));
+
+            if (!ContainsChinese(trueName) && !trueName.Any(char.IsLetter))
+            {
+                var sub = v.Name.Replace(trueName, "");
+                var order = $"mv \"{v.Path}\\{v.Name}\" \"{v.Path}\\{v.PathFolderName}{sub}\"";
+                order = order.Replace("\\", "/");
+                sw.WriteLine(order);
+            }
+        }
+
         sw.Close();
         sw.Dispose();
         Debug.LogError("sh生成成功");
