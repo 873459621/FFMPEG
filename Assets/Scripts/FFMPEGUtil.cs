@@ -962,12 +962,9 @@ public class FFMPEGUtil : MonoBehaviour
 
         foreach (var pre in Pre.Keys)
         {
-            if (Pre[pre].Count > 1)
-            {
-                order = $"mkdir -p \"{MovePath}\\番号\\{pre}\\\"";
-                order = order.Replace("\\", "/");
-                sw.WriteLine(order);
-            }
+            order = $"mkdir -p \"{MovePath}\\番号\\{pre}\\\"";
+            order = order.Replace("\\", "/");
+            sw.WriteLine(order);
         }
         
         foreach (var presub in PreSub.Keys)
@@ -1111,7 +1108,7 @@ public class FFMPEGUtil : MonoBehaviour
                     sw.WriteLine(order);
                     continue;
                 }
-                else if (Pre.ContainsKey(mp4.Pre) && Pre[mp4.Pre].Count > 1)
+                else if (Pre.ContainsKey(mp4.Pre))
                 {
                     order = $"mv \"{mp4.Path}\" \"{MovePath}\\番号\\{mp4.Pre}\\\"";
                     order = order.Replace("\\", "/");
@@ -1120,6 +1117,10 @@ public class FFMPEGUtil : MonoBehaviour
                 }
                 else
                 {
+                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\番号\\其他\\\"";
+                    order = order.Replace("\\", "/");
+                    sw.WriteLine(order);
+                    continue;
                 }
             }
 
