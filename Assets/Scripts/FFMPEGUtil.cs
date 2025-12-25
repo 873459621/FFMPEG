@@ -35,6 +35,19 @@ public class VideoInfo
         }
     }
 
+    public bool IsSame(VideoInfo info)
+    {
+        return info.Duration == Duration 
+               && info.Bitrate == Bitrate 
+               && info.Width == Width
+               && info.Heigth == Heigth
+               && info.Codec == Codec
+               && info.Duration != 0
+               && info.Bitrate != 0
+               && info.Width != 0
+               && info.Heigth != 0;
+    }
+
     public VideoInfo()
     {
     }
@@ -105,11 +118,25 @@ public class MP4
 
     public bool IsMatch = false;
 
+    public VideoInfo VideoInfo;
+
     public string PreSub
     {
         get
         {
             return $"{Pre}-{Sub}";
+        }
+    }
+    
+    public string PathFolderName
+    {
+        get
+        {
+            var p = Path.Replace("\\", "/");
+            p = p.Replace("/", "-");
+            p = p.Replace(".", "-");
+            p = p.Replace(":", "-");
+            return p;
         }
     }
     
@@ -203,7 +230,7 @@ public class MP4
             Name = str;
             Pre = "";
             Sub = "";
-            Debug.LogError(Name);
+            // Debug.LogError(Name);
         }
     }
     
@@ -937,6 +964,100 @@ public class FFMPEGUtil : MonoBehaviour
         return Regex.IsMatch(input, @"[\u4e00-\u9fa5]");
     }
 
+    //校验并删除一样的文件
+    public void GenDelSameSH()
+    {
+        ClearMp4s();
+        
+        var list = AllVideoInfos.Values.ToList();
+        Sort(list);
+
+        foreach (var video in list)
+        {
+            var mp4 = new MP4(video.Name, $"{video.Path}\\{video.Name}");
+            mp4.VideoInfo = video;
+            AddMp4(mp4);
+        }
+        
+        StreamWriter sw;
+        FileInfo fi = new FileInfo($"Assets/Resources/delsame.sh");
+        sw = fi.CreateText();
+
+        Dictionary<long, List<MP4>> sameDict = new Dictionary<long, List<MP4>>();
+
+        foreach (var kvp in Same)
+        {
+            // if (kvp.Value.Count > 1)
+            {
+                foreach (var mp4 in kvp.Value)
+                {
+                    if (!sameDict.ContainsKey(mp4.VideoInfo.Duration))
+                    {
+                        sameDict.Add(mp4.VideoInfo.Duration, new List<MP4>{ mp4 });
+                    }
+                    else
+                    {
+                        sameDict[mp4.VideoInfo.Duration].Add(mp4);
+                    }
+                }
+            }
+        }
+
+        Dictionary<MP4, int> sameDel = new Dictionary<MP4, int>();
+
+        foreach (var sameList in sameDict.Values)
+        {
+            if (sameList.Count > 1)
+            {
+                for (int i = 0; i < sameList.Count - 1; i++)
+                {
+                    for (int j = i + 1; j < sameList.Count; j++)
+                    {
+                        if (sameList[j].VideoInfo.IsSame(sameList[i].VideoInfo))
+                        {
+                            sameDel.TryAdd(sameList[i], 1);
+                            sameDel.TryAdd(sameList[j], 1);
+                        }
+                    }
+                }
+            }
+        }
+        
+        sameDict.Clear();
+
+        foreach (var mp4 in sameDel.Keys)
+        {
+            if (!sameDict.ContainsKey(mp4.VideoInfo.Duration))
+            {
+                sameDict.Add(mp4.VideoInfo.Duration, new List<MP4>{ mp4 });
+            }
+            else
+            {
+                sameDict[mp4.VideoInfo.Duration].Add(mp4);
+            }
+        }
+
+        foreach (var del in sameDict.Values)
+        {
+            for (int i = 0; i < del.Count; i++)
+            {
+                if (i > 0)
+                {
+                    sw.WriteLine(Del(del[i].VideoInfo));
+                    Debug.LogError($"删除：{del[i].Path}");
+                }
+                else
+                {
+                    Debug.LogWarning($"保留：{del[i].Path}");
+                }
+            }
+        }
+        
+        sw.Close();
+        sw.Dispose();
+        Debug.LogError("sh生成成功");
+    }
+
     public void GenDistributeSH()
     {
         ClearMp4s();
@@ -953,25 +1074,6 @@ public class FFMPEGUtil : MonoBehaviour
         StreamWriter sw;
         FileInfo fi = new FileInfo($"Assets/Resources/distribute.sh");
         sw = fi.CreateText();
-        
-        string order;
-
-        foreach (var pre in Pre.Keys)
-        {
-            order = $"mkdir -p \"{MovePath}\\番号\\{pre}\\\"";
-            order = order.Replace("\\", "/");
-            sw.WriteLine(order);
-        }
-        
-        foreach (var presub in PreSub.Keys)
-        {
-            if (PreSub[presub].Count > 1)
-            {
-                order = $"mkdir -p \"{MovePath}\\番号\\{PreSub[presub][0].Pre}\\{presub}\\\"";
-                order = order.Replace("\\", "/");
-                sw.WriteLine(order);
-            }
-        }
         
         List<string> keywords = new List<string>()
         {
@@ -1018,6 +1120,7 @@ public class FFMPEGUtil : MonoBehaviour
             "裤哥",
             "王子哥",
             "小蝴蝶",
+            "曹长卿",
 
             "萝莉原创",
             "海角",
@@ -1048,16 +1151,34 @@ public class FFMPEGUtil : MonoBehaviour
             "口活",
         };
         
+        string order;
+        string folder;
+
+        foreach (var pre in Pre.Keys)
+        {
+            folder = pre.Any(char.IsDigit) ? "番号\\数字" : "番号";
+            order = $"mkdir -p \"{MovePath}\\{folder}\\{pre}\\\"";
+            order = order.Replace("\\", "/");
+            sw.WriteLine(order);
+        }
+        
+        foreach (var presub in PreSub.Keys)
+        {
+            if (PreSub[presub].Count > 1)
+            {
+                folder = PreSub[presub][0].Pre.Any(char.IsDigit) ? "番号\\数字" : "番号";
+                order = $"mkdir -p \"{MovePath}\\{folder}\\{PreSub[presub][0].Pre}\\{presub}\\\"";
+                order = order.Replace("\\", "/");
+                sw.WriteLine(order);
+            }
+        }
+        
         foreach (var k in keywords)
         {
             order = $"mkdir -p \"{MovePath}\\国产\\{k}\\\"";
             order = order.Replace("\\", "/");
             sw.WriteLine(order);
         }
-        
-        order = $"mkdir -p \"{MovePath}\\番号\\其他\\\"";
-        order = order.Replace("\\", "/");
-        sw.WriteLine(order);
         
         order = $"mkdir -p \"{MovePath}\\国产\\未知\\\"";
         order = order.Replace("\\", "/");
@@ -1071,8 +1192,29 @@ public class FFMPEGUtil : MonoBehaviour
         
         foreach (var mp4 in Mp4s)
         {
+            //剔除已分配文件
+            if (mp4.Path.Contains(MovePath))
+            {
+                continue;
+            }
+            
+            //同名文件
             if (Same[mp4.VideoName].Count > 1)
             {
+                folder = mp4.IsMatch ? "同名\\番号" : "同名";
+
+                if (mp4.IsMatch)
+                {
+                    Debug.LogError($"同名番号：{mp4.PreSub}");
+                }
+
+                order = $"mkdir -p \"{MovePath}\\{folder}\\{mp4.VideoName.Replace('.', '-')}\\{mp4.PathFolderName}\\\"";
+                order = order.Replace("\\", "/");
+                sw.WriteLine(order);
+                
+                order = $"mv \"{mp4.Path}\" \"{MovePath}\\{folder}\\{mp4.VideoName.Replace('.', '-')}\\{mp4.PathFolderName}\\\"";
+                order = order.Replace("\\", "/");
+                sw.WriteLine(order);
                 continue;
             }
             
@@ -1099,21 +1241,16 @@ public class FFMPEGUtil : MonoBehaviour
             {
                 if (PreSub.ContainsKey(mp4.PreSub) && PreSub[mp4.PreSub].Count > 1)
                 {
-                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\番号\\{mp4.Pre}\\{mp4.PreSub}\\\"";
+                    folder = mp4.Pre.Any(char.IsDigit) ? "番号\\数字" : "番号";
+                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\{folder}\\{mp4.Pre}\\{mp4.PreSub}\\\"";
                     order = order.Replace("\\", "/");
                     sw.WriteLine(order);
                     continue;
                 }
                 else if (Pre.ContainsKey(mp4.Pre))
                 {
-                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\番号\\{mp4.Pre}\\\"";
-                    order = order.Replace("\\", "/");
-                    sw.WriteLine(order);
-                    continue;
-                }
-                else
-                {
-                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\番号\\其他\\\"";
+                    folder = mp4.Pre.Any(char.IsDigit) ? "番号\\数字" : "番号";
+                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\{folder}\\{mp4.Pre}\\\"";
                     order = order.Replace("\\", "/");
                     sw.WriteLine(order);
                     continue;

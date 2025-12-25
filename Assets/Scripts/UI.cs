@@ -55,6 +55,11 @@ public class UI : MonoBehaviour
             FFMPEGUtil.Instance.GenDistributeSH();
         });
         
+        AddListener("btn_delsame", () =>
+        {
+            FFMPEGUtil.Instance.GenDelSameSH();
+        });
+        
         btn_del.onClick.AddListener(() =>
         {
             StartCoroutine(FFMPEGUtil.Instance.GenDelSH());
