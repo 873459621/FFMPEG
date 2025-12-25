@@ -882,10 +882,6 @@ public class FFMPEGUtil : MonoBehaviour
                 
                 if (sameNameDict.ContainsKey(trueName))
                 {
-                    string order = $"mkdir -p \"{OutPutPath}\\{list[i].PathFolderName}\\\"";
-                    order = order.Replace("\\", "/");
-                    sw.WriteLine(order);
-                    
                     string path = $"{OutPutPath}\\{list[i].PathFolderName}\\{trueName}.mp4";
 
                     if (File.Exists(path))
