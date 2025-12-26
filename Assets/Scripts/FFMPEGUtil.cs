@@ -1337,27 +1337,27 @@ public class FFMPEGUtil : MonoBehaviour
                 }
             }
 
+            key = "";
+                
+            foreach (var k in keywords2)
+            {
+                if (mp4.VideoName.Contains(k))
+                {
+                    key = k;
+                    break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(key))
+            {
+                order = $"mv \"{mp4.Path}\" \"{MovePath}\\国产\\{key}\\\"";
+                order = order.Replace("\\", "/");
+                sw.WriteLine(order);
+                continue;
+            }
+            
             if (ContainsChinese(mp4.VideoName))
             {
-                key = "";
-                
-                foreach (var k in keywords2)
-                {
-                    if (mp4.VideoName.Contains(k))
-                    {
-                        key = k;
-                        break;
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(key))
-                {
-                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\国产\\{key}\\\"";
-                    order = order.Replace("\\", "/");
-                    sw.WriteLine(order);
-                    continue;
-                }
-                
                 order = $"mv \"{mp4.Path}\" \"{MovePath}\\国产\\未知\\\"";
                 order = order.Replace("\\", "/");
                 sw.WriteLine(order);
