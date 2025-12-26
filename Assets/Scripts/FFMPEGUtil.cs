@@ -377,7 +377,8 @@ public class FFMPEGUtil : MonoBehaviour
                || str.EndsWith(".mts", StringComparison.OrdinalIgnoreCase)
                || str.EndsWith(".vob", StringComparison.OrdinalIgnoreCase)
                || str.EndsWith(".m4v", StringComparison.OrdinalIgnoreCase)
-               || str.EndsWith(".ts", StringComparison.OrdinalIgnoreCase);
+               || str.EndsWith(".ts", StringComparison.OrdinalIgnoreCase)
+               || str.EndsWith(".asf", StringComparison.OrdinalIgnoreCase);
     }
 
     public static void OpenFolder(string folderPath)
@@ -514,10 +515,12 @@ public class FFMPEGUtil : MonoBehaviour
                 && !file.FullName.Contains("RECYCLE")
                 && !file.FullName.Contains("miHoYo")
                 && !file.FullName.Contains("found.000")
-                && !file.FullName.Contains("Recovery")
-                && !file.FullName.Contains("fenp"))
+                && !file.FullName.Contains("Recovery"))
             {
-                allDir.Enqueue(file);
+                if (ScanDistributeFolder || !file.FullName.Contains(DistributeFolderName))
+                {
+                    allDir.Enqueue(file);
+                }
             }
         }
 
@@ -685,8 +688,10 @@ public class FFMPEGUtil : MonoBehaviour
 
     public string OutPutPath;
     public string MovePath;
+    public string DistributeFolderName = "fenpeiwancheng";
     public bool UseH265 = true;
     public bool CheckFile = true;
+    public bool ScanDistributeFolder = true;
 
     public string Encode(VideoInfo info)
     {
@@ -971,6 +976,8 @@ public class FFMPEGUtil : MonoBehaviour
     {
         ClearMp4s();
         
+        Load("dis");
+        
         var list = AllVideoInfos.Values.ToList();
         Sort(list);
 
@@ -1063,6 +1070,8 @@ public class FFMPEGUtil : MonoBehaviour
     public void GenDistributeSH()
     {
         ClearMp4s();
+        
+        Load("dis");
         
         var list = AllVideoInfos.Values.ToList();
         Sort(list);
@@ -1203,7 +1212,7 @@ public class FFMPEGUtil : MonoBehaviour
         foreach (var mp4 in Mp4s)
         {
             //剔除已分配文件
-            if (mp4.Path.Contains(MovePath))
+            if (mp4.Path.Contains(DistributeFolderName))
             {
                 continue;
             }
