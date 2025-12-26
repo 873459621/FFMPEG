@@ -1116,7 +1116,8 @@ public class FFMPEGUtil : MonoBehaviour
             "第一深情",
             "七天",
             "大王",
-            "仓本C",
+            "C仔",
+            "c仔",
             "虫哥",
             "芸能",
             "pick",
@@ -1129,6 +1130,7 @@ public class FFMPEGUtil : MonoBehaviour
             "曹先生",
             "吾爱",
             "裤哥",
+            "内裤",
             "王子哥",
             "小蝴蝶",
             "曹长卿",
@@ -1138,6 +1140,12 @@ public class FFMPEGUtil : MonoBehaviour
             "秦先生",
             "老王",
             "美男子",
+            "老六",
+            "轻吻",
+            "阅逼者",
+            "林书",
+            "周于希",
+            "李白",
 
             "萝莉原创",
             "海角",
@@ -1147,8 +1155,14 @@ public class FFMPEGUtil : MonoBehaviour
             "寻花",
             "探花",
             "会所",
-            
+            "原-创",
+            "百度云",
             "莞式",
+            "云盘",
+        };
+
+        List<string> keywords2 = new List<string>()
+        {
             "KTV",
             "ktv",
             "外围",
@@ -1164,10 +1178,50 @@ public class FFMPEGUtil : MonoBehaviour
             "偷情",
             "淫妻",
             "嫖",
-            "健身房",
+            "健身",
             "口活",
             "偷拍",
             "泡良",
+            "口交",
+            "超模",
+            "国模",
+            "台湾",
+            "剧情",
+            "千人",
+            "水印",
+            "字幕",
+            "事件",
+            "混血",
+            "反差",
+            "留学",
+            "嫩模",
+            "白丝",
+            "黑丝",
+            "极品",
+            "酒店",
+            "P站",
+            "JK",
+            "国产",
+            "露脸",
+            "民宿",
+            "女神",
+            "女友",
+            "漂亮",
+            "清纯",
+            "上海",
+            "性感",
+            "推特",
+            "TG",
+            "流出",
+            "原创",
+            "御姐",
+            "胖",
+            "越南",
+            "泰国",
+            "传媒",
+            "双飞",
+            "公狗",
+            "母狗",
         };
         
         string order;
@@ -1193,6 +1247,13 @@ public class FFMPEGUtil : MonoBehaviour
         }
         
         foreach (var k in keywords)
+        {
+            order = $"mkdir -p \"{MovePath}\\国产\\{k}\\\"";
+            order = order.Replace("\\", "/");
+            sw.WriteLine(order);
+        }
+        
+        foreach (var k in keywords2)
         {
             order = $"mkdir -p \"{MovePath}\\国产\\{k}\\\"";
             order = order.Replace("\\", "/");
@@ -1278,6 +1339,25 @@ public class FFMPEGUtil : MonoBehaviour
 
             if (ContainsChinese(mp4.VideoName))
             {
+                key = "";
+                
+                foreach (var k in keywords2)
+                {
+                    if (mp4.VideoName.Contains(k))
+                    {
+                        key = k;
+                        break;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(key))
+                {
+                    order = $"mv \"{mp4.Path}\" \"{MovePath}\\国产\\{key}\\\"";
+                    order = order.Replace("\\", "/");
+                    sw.WriteLine(order);
+                    continue;
+                }
+                
                 order = $"mv \"{mp4.Path}\" \"{MovePath}\\国产\\未知\\\"";
                 order = order.Replace("\\", "/");
                 sw.WriteLine(order);
