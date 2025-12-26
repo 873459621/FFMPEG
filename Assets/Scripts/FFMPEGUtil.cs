@@ -376,7 +376,8 @@ public class FFMPEGUtil : MonoBehaviour
                || str.EndsWith(".mpg", StringComparison.OrdinalIgnoreCase)
                || str.EndsWith(".mts", StringComparison.OrdinalIgnoreCase)
                || str.EndsWith(".vob", StringComparison.OrdinalIgnoreCase)
-               || str.EndsWith(".m4v", StringComparison.OrdinalIgnoreCase);
+               || str.EndsWith(".m4v", StringComparison.OrdinalIgnoreCase)
+               || str.EndsWith(".ts", StringComparison.OrdinalIgnoreCase);
     }
 
     public static void OpenFolder(string folderPath)
@@ -513,7 +514,8 @@ public class FFMPEGUtil : MonoBehaviour
                 && !file.FullName.Contains("RECYCLE")
                 && !file.FullName.Contains("miHoYo")
                 && !file.FullName.Contains("found.000")
-                && !file.FullName.Contains("Recovery"))
+                && !file.FullName.Contains("Recovery")
+                && !file.FullName.Contains("fenp"))
             {
                 allDir.Enqueue(file);
             }
@@ -521,7 +523,7 @@ public class FFMPEGUtil : MonoBehaviour
 
         foreach (var file in drive.GetFiles())
         {
-            if (file.Length > MIN_LEN && IsVideo(file.FullName))
+            if (IsVideo(file.FullName))
             {
                 allFile.Add(file);
             }
@@ -543,7 +545,7 @@ public class FFMPEGUtil : MonoBehaviour
 
             foreach (var file in dir.GetFiles())
             {
-                if (file.Length > MIN_LEN && IsVideo(file.FullName))
+                if (IsVideo(file.FullName))
                 {
                     allFile.Add(file);
                 }
