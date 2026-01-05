@@ -1146,6 +1146,8 @@ public class FFMPEGUtil : MonoBehaviour
             "林书",
             "周于希",
             "李白",
+            "GCTP",
+            "胖爺",
 
             "萝莉原创",
             "海角",
@@ -1222,6 +1224,7 @@ public class FFMPEGUtil : MonoBehaviour
             "双飞",
             "公狗",
             "母狗",
+            "绿",
         };
         
         string order;
