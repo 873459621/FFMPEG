@@ -80,6 +80,8 @@ public class StockDataManager : MonoBehaviour
 
     IEnumerator Init()
     {
+        yield return new WaitForSeconds(0.2f);
+        
         yield return ExchangeRateFetcher.Instance.ExchangeRateFetch();
         
         LoadCodeName();
