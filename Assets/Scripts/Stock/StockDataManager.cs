@@ -821,7 +821,7 @@ public class StockDataManager : MonoBehaviour
             var date = new DateTime(long.Parse(ss[1]));
             var now = DateTime.Now;
 
-            if (date.ToShortDateString().Equals(now.ToShortDateString()))
+            if (now.Hour < 16 || date.ToShortDateString().Equals(now.ToShortDateString()))
             {
                 CurUnits.TryAdd(stockData.Code, double.Parse(ss[0]));
                 stockData.Calc();
