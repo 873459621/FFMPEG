@@ -810,7 +810,7 @@ public class StockDataManager : MonoBehaviour
                 Debug.LogError("请求失败: " + request.error);
         }
         
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.25f);
     }
     
     IEnumerator GetStockPrice(StockData stockData)
@@ -870,6 +870,6 @@ public class StockDataManager : MonoBehaviour
             }
         }
         
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1.25f);
     }
 }
