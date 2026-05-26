@@ -99,6 +99,129 @@ public class StockUI : UIBase
             RefreshList();
         });
         
+        AddListener("btn_qsell", () =>
+        {
+            var code = GetInputText("code");
+
+            if (string.IsNullOrEmpty(code) 
+                || GetInputDouble("unit") == 0)
+            {
+                return;
+            }
+            
+            int num = GetInputInt("num");
+            double unit = GetInputDouble("unit");
+            var sellData = GetInputDate("sell");
+
+            if (num == 0)
+            {
+                foreach (var stockData in StockDataManager.Instance.StockDatas.Values)
+                {
+                    if (stockData.Code.Equals(code))
+                    {
+                        stockData.SellDate = sellData > stockData.BuyDate ? sellData : DateTime.Now;
+                        stockData.Profit = (unit - stockData.Unit) * stockData.Num - stockData.Sum * 0.001;
+                        
+                        stockData.Calc();
+                    }
+                }
+            }
+            else
+            {
+                List<StockData> stockDatas = new List<StockData>();
+
+                foreach (var stockData in StockDataManager.Instance.StockDatas.Values)
+                {
+                    if (stockData.Code.Equals(code))
+                    {
+                        stockDatas.Add(stockData);
+                    }
+                }
+                
+                stockDatas.Sort((a, b) => b.Unit.CompareTo(a.Unit));
+
+                foreach (var stockData in stockDatas)
+                {
+                    if (num >= stockData.Num)
+                    {
+                        num -= stockData.Num;
+                        
+                        stockData.SellDate = sellData > stockData.BuyDate ? sellData : DateTime.Now;
+                        stockData.Profit = (unit - stockData.Unit) * stockData.Num - stockData.Sum * 0.001;
+                        stockData.Calc();
+
+                        if (num == 0)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        var newData = new StockData()
+                        {
+                            Type = stockData.Type,
+                            Code = stockData.Code,
+                            Name = stockData.Name,
+                            Num = stockData.Num - num,
+                            Unit = stockData.Unit,
+                            Profit = stockData.Profit,
+                            BuyDate = stockData.BuyDate,
+                            SellDate = stockData.SellDate,
+                        };
+            
+                        newData.Init();
+                        StockDataManager.Instance.AddStockData(newData);
+            
+                        stockData.SellDate = sellData > stockData.BuyDate ? sellData : DateTime.Now;
+                        stockData.Num = num;
+                        stockData.Profit = (unit - 1.001 * stockData.Unit) * num;
+                        stockData.Calc();
+                        break;
+                    }
+                }
+            }
+            
+            StockDataManager.Instance.SaveAll();
+        
+            GetInput("code").text = "";
+            GetInput("num").text = "";
+            GetInput("unit").text = "";
+            GetInput("sell").text = "";
+            
+            RefreshList();
+        });
+
+        AddListener("btn_mod", () =>
+        {
+            var code = GetInputText("code");
+
+            if (string.IsNullOrEmpty(code) 
+                || GetInputInt("num") == 0)
+            {
+                return;
+            }
+            
+            int num = GetInputInt("num");
+
+            foreach (var stockData in StockDataManager.Instance.StockDatas.Values)
+            {
+                if (stockData.Code.Equals(code))
+                {
+                    stockData.Num += Mathf.FloorToInt(stockData.Num * 0.01f * num);
+                    stockData.Unit /= (100 + num);
+                    
+                    stockData.Calc();
+                }
+            }
+            
+            StockDataManager.Instance.SaveAll();
+        
+            GetInput("code").text = "";
+            GetInput("num").text = "";
+            
+            RefreshList();
+        });
+        
         AddListener("btn_show", RefreshList);
         
         GetDropdown("type").value = (int)StockType.Short;
