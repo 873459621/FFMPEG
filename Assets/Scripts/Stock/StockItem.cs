@@ -27,7 +27,7 @@ public class StockItem : UIBase
 
         bool showExchange = StockUI.Instance.ShowExchange;
 
-        Color color = (stockData.Profit > 0 || this.stockData.FloatingRate > 0) ? new Color(1, 0.2f, 0.2f) : Color.green;
+        Color color = (stockData.Profit > 0 || this.stockData.FloatingRate > 0) ? Color.white : Color.gray;
         
         GetText("code").text = stockData.Code;
         GetText("name").text = stockData.Name;
