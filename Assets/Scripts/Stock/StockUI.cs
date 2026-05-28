@@ -117,7 +117,7 @@ public class StockUI : UIBase
             {
                 foreach (var stockData in StockDataManager.Instance.StockDatas.Values)
                 {
-                    if (stockData.Code.Equals(code))
+                    if (stockData.Code.Equals(code) && stockData.SellType == SellType.Hold)
                     {
                         stockData.SellDate = sellData > stockData.BuyDate ? sellData : DateTime.Now;
                         stockData.Profit = (unit - stockData.Unit) * stockData.Num - stockData.Sum * 0.001;
@@ -132,7 +132,7 @@ public class StockUI : UIBase
 
                 foreach (var stockData in StockDataManager.Instance.StockDatas.Values)
                 {
-                    if (stockData.Code.Equals(code))
+                    if (stockData.Code.Equals(code) && stockData.SellType == SellType.Hold)
                     {
                         stockDatas.Add(stockData);
                     }
@@ -205,7 +205,7 @@ public class StockUI : UIBase
 
             foreach (var stockData in StockDataManager.Instance.StockDatas.Values)
             {
-                if (stockData.Code.Equals(code))
+                if (stockData.Code.Equals(code) && stockData.SellType == SellType.Hold)
                 {
                     stockData.Num += Mathf.FloorToInt(stockData.Num * 0.01f * num);
                     stockData.Unit /= (100 + num);
